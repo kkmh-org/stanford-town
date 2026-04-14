@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>角色世界模拟器 Demo — 南一高中</title>
+<style>
+  :root {
+    --bg: #0f1117; --card: #1a1d27; --border: #2a2d3a;
+    --text: #e1e4ed; --muted: #8b8fa3; --accent: #6c8cff;
+    --zhong: #5b9bd5; --zhou: #e8734a;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+         background: var(--bg); color: var(--text); }
+  header { padding: 24px 32px; border-bottom: 1px solid var(--border);
+           display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 20px; font-weight: 600; }
+  header .tag { font-size: 12px; background: var(--accent); color: #fff;
+                padding: 2px 8px; border-radius: 4px; }
+  .controls { padding: 16px 32px; display: flex; gap: 12px; align-items: center; }
+  .controls button { background: var(--accent); color: #fff; border: none;
+                     padding: 8px 20px; border-radius: 6px; cursor: pointer;
+                     font-size: 14px; transition: .15s; }
+  .controls button:hover { filter: brightness(1.15); }
+  .controls button:disabled { opacity: .4; cursor: default; }
+  .controls .speed { color: var(--muted); font-size: 13px; }
+  .controls select { background: var(--card); color: var(--text); border: 1px solid var(--border);
+                     padding: 6px 10px; border-radius: 6px; font-size: 13px; }
+  .main { display: grid; grid-template-columns: 280px 1fr; gap: 0;
+          height: calc(100vh - 130px); }
+  /* --- Left: Map --- */
+  .map-panel { border-right: 1px solid var(--border); padding: 20px;
+               overflow-y: auto; }
+  .map-panel h2 { font-size: 14px; color: var(--muted); margin-bottom: 12px;
+                  text-transform: uppercase; letter-spacing: 1px; }
+  .sector { margin-bottom: 8px; }
+  .sector-name { font-size: 13px; font-weight: 600; padding: 6px 10px;
+                 border-radius: 6px; cursor: default; transition: .15s; }
+  .sector-name.active { background: var(--accent); color: #fff; }
+  .arena-list { padding-left: 20px; margin-top: 4px; }
+  .arena { font-size: 12px; color: var(--muted); padding: 3px 8px;
+           border-radius: 4px; margin-bottom: 2px; }
+  .arena.has-zhong { border-left: 3px solid var(--zhong); color: var(--text); }
+  .arena.has-zhou { border-left: 3px solid var(--zhou); color: var(--text); }
+  .arena.has-both { border-left: 3px solid; border-image: linear-gradient(var(--zhong), var(--zhou)) 1; color: #fff; }
+  .avatar { display: inline-block; width: 18px; height: 18px; border-radius: 50%;
+            font-size: 10px; text-align: center; line-height: 18px; margin-left: 4px;
+            font-weight: 700; }
+  .avatar.z { background: var(--zhong); color: #fff; }
+  .avatar.w { background: var(--zhou); color: #fff; }
+  /* --- Right: Timeline --- */
+  .timeline-panel { padding: 20px 28px; overflow-y: auto; }
+  .time-display { font-size: 36px; font-weight: 700; font-variant-numeric: tabular-nums;
+                  margin-bottom: 16px; }
+  .persona-row { display: flex; gap: 16px; margin-bottom: 20px; }
+  .persona-card { flex: 1; background: var(--card); border-radius: 10px;
+                  padding: 16px; border: 1px solid var(--border); }
+  .persona-card h3 { font-size: 15px; margin-bottom: 8px; display: flex;
+                     align-items: center; gap: 8px; }
+  .persona-card .loc { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .persona-card .act { font-size: 13px; line-height: 1.5; }
+  .persona-card .emoji { font-size: 20px; }
+  .persona-card.zhong { border-top: 3px solid var(--zhong); }
+  .persona-card.zhou { border-top: 3px solid var(--zhou); }
+  /* --- History --- */
+  .history { margin-top: 16px; }
+  .history h2 { font-size: 14px; color: var(--muted); margin-bottom: 10px;
+                text-transform: uppercase; letter-spacing: 1px; }
+  .history-item { font-size: 12px; padding: 8px 12px; border-left: 2px solid var(--border);
+                  margin-bottom: 6px; color: var(--muted); }
+  .history-item .hi-time { color: var(--accent); font-weight: 600; margin-right: 6px; }
+  .history-item .hi-name { font-weight: 600; }
+  .history-item.zhong .hi-name { color: var(--zhong); }
+  .history-item.zhou .hi-name { color: var(--zhou); }
+  /* --- Empty state --- */
+  .empty { text-align: center; padding: 60px; color: var(--muted); }
+  .empty p { margin-top: 8px; font-size: 13px; }
+  /* --- Footer status --- */
+  .status-bar { position: fixed; bottom: 0; left: 0; right: 0;
+                background: var(--card); border-top: 1px solid var(--border);
+                padding: 8px 32px; font-size: 12px; color: var(--muted);
+                display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>角色世界模拟器 Demo</h1>
+  <span class="tag">南一高中</span>
+</header>
+
+<div class="controls">
+  <button id="btnLoad" onclick="loadData()">加载模拟数据</button>
+  <button id="btnPlay" onclick="play()" disabled>▶ 播放</button>
+  <button id="btnPause" onclick="pause()" disabled>⏸ 暂停</button>
+  <button id="btnPrev" onclick="step(-1)" disabled>◀ 上一步</button>
+  <button id="btnNext" onclick="step(1)" disabled>下一步 ▶</button>
+  <select id="speedSel" onchange="setSpeed(this.value)">
+    <option value="2000">慢速 (2s)</option>
+    <option value="1000" selected>正常 (1s)</option>
+    <option value="400">快速 (0.4s)</option>
+  </select>
+  <span class="speed" id="tickInfo">—</span>
+</div>
+
+<div class="main">
+  <div class="map-panel" id="mapPanel">
+    <h2>📍 南一高中</h2>
+    <div id="mapContent"><p style="color:var(--muted);font-size:13px">请先加载数据</p></div>
+  </div>
+  <div class="timeline-panel" id="timelinePanel">
+    <div class="time-display" id="timeDisplay">--:--</div>
+    <div class="persona-row" id="personaRow">
+      <div class="empty"><p>点击「加载模拟数据」开始</p></div>
+    </div>
+    <div class="history" id="historySection" style="display:none">
+      <h2>📜 活动轨迹</h2>
+      <div id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <span id="statusLeft">就绪</span>
+  <span id="statusRight">Generative Agents × LBS Demo</span>
+</div>
+
+<script>
+const SECTORS = [
+  {name:"教学楼", arenas:["高二三班教室","音乐教室","走廊"]},
+  {name:"行政楼", arenas:["学生会办公室","老师办公室"]},
+  {name:"图书馆", arenas:["阅读区","自习区"]},
+  {name:"食堂", arenas:["一楼窗口","二楼窗口"]},
+  {name:"咖啡厅", arenas:["座位区","点单台"]},
+  {name:"操场", arenas:["篮球场","跑道"]},
+  {name:"天台", arenas:["平台"]},
+  {name:"小卖部", arenas:["店内"]},
+  {name:"校门口", arenas:["校门区"]},
+  {name:"后门小花园", arenas:["花园"]},
+];
+
+let data = [];
+let ticks = {};       // tick_num -> [{persona, sector, arena, action, emoji}, ...]
+let tickNums = [];
+let currentIdx = -1;
+let timer = null;
+let speed = 1000;
+
+function setSpeed(v) { speed = parseInt(v); }
+
+async function loadData() {
+  try {
+    const resp = await fetch('output/sim_log.json');
+    data = await resp.json();
+  } catch(e) {
+    // Try relative to demo.html
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = '.json';
+    input.onchange = e => {
+      const reader = new FileReader();
+      reader.onload = ev => { data = JSON.parse(ev.target.result); processData(); };
+      reader.readAsText(e.target.files[0]);
+    };
+    input.click();
+    return;
+  }
+  processData();
+}
+
+function processData() {
+  ticks = {};
+  data.forEach(d => {
+    if (!ticks[d.tick]) ticks[d.tick] = [];
+    ticks[d.tick].push(d);
+  });
+  tickNums = Object.keys(ticks).map(Number).sort((a,b)=>a-b);
+  currentIdx = -1;
+  document.getElementById('btnPlay').disabled = false;
+  document.getElementById('btnNext').disabled = false;
+  document.getElementById('btnPrev').disabled = false;
+  document.getElementById('statusLeft').textContent = `已加载 ${data.length} 条记录，${tickNums.length} 个 tick`;
+  document.getElementById('tickInfo').textContent = `共 ${tickNums.length} 步`;
+  renderMap({});
+  step(1);
+}
+
+function renderMap(positions) {
+  // positions: {persona: {sector, arena}}
+  let html = '';
+  SECTORS.forEach(s => {
+    const personasInSector = Object.entries(positions).filter(([_,v])=>v.sector===s.name);
+    const isActive = personasInSector.length > 0;
+    html += `<div class="sector">`;
+    html += `<div class="sector-name ${isActive?'active':''}">${s.name}</div>`;
+    html += `<div class="arena-list">`;
+    s.arenas.forEach(a => {
+      const inArena = Object.entries(positions).filter(([_,v])=>v.sector===s.name && v.arena===a);
+      const hasZhong = inArena.some(([n])=>n==='钟辰时');
+      const hasZhou = inArena.some(([n])=>n==='周往');
+      let cls = '';
+      if (hasZhong && hasZhou) cls = 'has-both';
+      else if (hasZhong) cls = 'has-zhong';
+      else if (hasZhou) cls = 'has-zhou';
+      html += `<div class="arena ${cls}">${a}`;
+      if (hasZhong) html += `<span class="avatar z">钟</span>`;
+      if (hasZhou) html += `<span class="avatar w">周</span>`;
+      html += `</div>`;
+    });
+    html += `</div></div>`;
+  });
+  document.getElementById('mapContent').innerHTML = html;
+}
+
+function renderTick(tickNum) {
+  const entries = ticks[tickNum] || [];
+  const timeStr = entries[0]?.time || '--:--';
+  document.getElementById('timeDisplay').textContent = timeStr;
+  document.getElementById('tickInfo').textContent = `Tick ${tickNum + 1} / ${tickNums.length}`;
+
+  const positions = {};
+  let cardHtml = '';
+  entries.forEach(e => {
+    const isZhong = e.persona === '钟辰时';
+    const cls = isZhong ? 'zhong' : 'zhou';
+    const action = (e.action || '').replace('(fallback) ','');
+    const sector = e.sector || '校外';
+    const arena = e.arena || '';
+    positions[e.persona] = {sector, arena};
+
+    // Truncate long action text
+    const shortAction = action.length > 120 ? action.slice(0,120) + '…' : action;
+
+    cardHtml += `<div class="persona-card ${cls}">
+      <h3><span class="emoji">${e.emoji||'👤'}</span> ${e.persona}</h3>
+      <div class="loc">📍 ${sector}${arena?' · '+arena:''}</div>
+      <div class="act">${shortAction || 'idle'}</div>
+    </div>`;
+  });
+  document.getElementById('personaRow').innerHTML = cardHtml || '<div class="empty"><p>无数据</p></div>';
+  renderMap(positions);
+
+  // History
+  const histSec = document.getElementById('historySection');
+  const histList = document.getElementById('historyList');
+  histSec.style.display = 'block';
+  let histHtml = '';
+  // Show all ticks up to current
+  for (let i = 0; i <= currentIdx; i++) {
+    const tn = tickNums[i];
+    (ticks[tn]||[]).forEach(e => {
+      const cls = e.persona === '钟辰时' ? 'zhong' : 'zhou';
+      const act = (e.action||'idle').replace('(fallback) ','');
+      const short = act.length > 80 ? act.slice(0,80)+'…' : act;
+      histHtml = `<div class="history-item ${cls}">
+        <span class="hi-time">${e.time}</span>
+        <span class="hi-name">${e.persona}</span>
+        ${e.emoji||''} ${short}
+      </div>` + histHtml;
+    });
+  }
+  histList.innerHTML = histHtml;
+}
+
+function step(dir) {
+  const next = currentIdx + dir;
+  if (next < 0 || next >= tickNums.length) return;
+  currentIdx = next;
+  renderTick(tickNums[currentIdx]);
+}
+
+function play() {
+  document.getElementById('btnPlay').disabled = true;
+  document.getElementById('btnPause').disabled = false;
+  if (currentIdx < 0) currentIdx = 0;
+  timer = setInterval(() => {
+    if (currentIdx >= tickNums.length - 1) { pause(); return; }
+    step(1);
+  }, speed);
+}
+
+function pause() {
+  clearInterval(timer); timer = null;
+  document.getElementById('btnPlay').disabled = false;
+  document.getElementById('btnPause').disabled = true;
+}
+</script>
+</body>
+</html>

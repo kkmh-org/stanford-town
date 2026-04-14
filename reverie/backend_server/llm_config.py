@@ -13,5 +13,5 @@ LITELLM_API_KEY = os.environ.get(
     "LITELLM_API_KEY", "sk-9B87dSinUvCGDaSa8ibLVw"
 )
 
-LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-5-mini")
+LLM_MODEL = os.environ.get("LLM_MODEL", "doubao-seed-1.8")
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "text-embedding-3-small")

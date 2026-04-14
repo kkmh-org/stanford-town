@@ -1,0 +1,92 @@
+{
+  "version": "2026-04-14",
+  "interaction_caps": {
+    "max_light_interactions_per_day": 10,
+    "max_deep_conversations_per_day": 2
+  },
+  "priority_definitions": {
+    "P0": {
+      "label": "不可中断",
+      "examples": ["上课", "考试"],
+      "allow_interaction": false
+    },
+    "P1": {
+      "label": "高专注",
+      "examples": ["运动比赛中", "学生会工作"],
+      "allow_interaction": true,
+      "trigger_probability": 0.1,
+      "override_if_urgent_memory": true
+    },
+    "P2": {
+      "label": "一般活动",
+      "examples": ["吃饭", "走路", "买东西"],
+      "allow_interaction": true,
+      "use_llm_judge": true
+    },
+    "P3": {
+      "label": "空闲",
+      "examples": ["独处", "闲逛", "午休天台"],
+      "allow_interaction": true,
+      "use_llm_judge": true
+    }
+  },
+  "forbidden_checks": [
+    {
+      "id": "in_class",
+      "field": "current_block.priority",
+      "op": "eq",
+      "value": "P0"
+    },
+    {
+      "id": "exam",
+      "field": "global_flags.exam_in_progress",
+      "op": "eq",
+      "value": true
+    },
+    {
+      "id": "do_not_disturb",
+      "field": "persona.do_not_disturb",
+      "op": "eq",
+      "value": true
+    },
+    {
+      "id": "daily_light_cap",
+      "field": "counters.light_interactions_today",
+      "op": "gte",
+      "value_ref": "interaction_caps.max_light_interactions_per_day"
+    }
+  ],
+  "pair_rules_zhong_zhou": [
+    {
+      "scene": "食堂",
+      "zhong_chenshi": "点头，可能坐对面但不说话",
+      "zhou_wang": "「钟模范，又吃这个？」"
+    },
+    {
+      "scene": "操场",
+      "zhong_chenshi": "观察，不主动搭话",
+      "zhou_wang": "若打球可能喊「来不来一局」"
+    },
+    {
+      "scene": "天台",
+      "zhong_chenshi": "独处，沉默共存",
+      "zhou_wang": "「……你也在啊。」"
+    },
+    {
+      "scene": "图书馆",
+      "zhong_chenshi": "正常，可能帮忙找书",
+      "zhou_wang": "坐不住，很快离开"
+    },
+    {
+      "scene": "咖啡厅",
+      "zhong_chenshi": "可能在看书",
+      "zhou_wang": "「哦，喝什么呢」"
+    },
+    {
+      "scene": "后门小花园",
+      "zhong_chenshi": "少见，可能路过",
+      "zhou_wang": "周往常驻地，会主动说话"
+    }
+  ],
+  "scene_chat_suitability_rank": ["天台", "后门小花园", "咖啡厅", "食堂", "走廊"]
+}

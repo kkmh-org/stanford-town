@@ -1,0 +1,134 @@
+[
+  {
+    "tick": 0,
+    "time": "08:00",
+    "persona": "钟辰时",
+    "sector": "教学楼",
+    "arena": "高二三班教室",
+    "action": "[(ID:gG00hg) Tuesday April 14 -- 08:00 AM] Activity: 钟辰时 attending the first morning class, sitting in the back row, listening attentively and taking structured notes, occasionally glancing at classmates' interactions without engaging\n[(ID:YYY456) Tuesday April 14 -- 09:00 AM] Activity: 钟辰时 continuing morning courses, maintaining focused listening, only responding concisely when the teacher calls on him, then returning to observation mode\n[(ID:AAA012) Tuesday April 14 -- 10:00 AM] Activity: 钟辰时 attending morning courses, using the short break between classes to organize his notes systematically, avoiding peer chats and instead watching the classroom's social dynamics quietly\n[(ID:BBB345) Tuesday April 14 -- 11:00 AM] Activity: 钟辰时 finishing the last morning course, packing his textbooks in an orderly sequence while waiting for the lunch bell, keeping an eye on classmates' post-class movements",
+    "emoji": "🔢🆔",
+    "address": "南一高中:教学楼:高二三班教室:课桌椅",
+    "duration_min": 60
+  },
+  {
+    "tick": 0,
+    "time": "08:00",
+    "persona": "周往",
+    "sector": "教学楼",
+    "arena": "高二三班教室",
+    "action": "[(ID:Vzcayl) Tuesday April 14 -- 08:00 AM] Activity: 周往刚把单车扎进车棚，就晃悠着冲进高二三班教室，胳膊一搭就勾住钟辰时的肩膀，扯着嗓子喊：“钟模范！大清早跟公式死磕呢？小心脑子背得锈掉啊！” 说完就凑到同桌旁边，唾沫星子乱飞地讲昨晚篮球赛的绝杀球，手舞足蹈比画着投篮动作，早自习铃响了都没察觉。",
+    "emoji": "Hmm",
+    "address": "南一高中:教学楼:高二三班教室:课桌椅",
+    "duration_min": 60
+  },
+  {
+    "tick": 1,
+    "time": "08:10",
+    "persona": "钟辰时",
+    "sector": "教学楼",
+    "arena": "高二三班教室",
+    "action": "conversing about This is a conversation about a buzzer-beater shot in the basketball game of Chengxi Middle School, where Zhou Wang excitedly talks about the amazing last-three-second fadeaway jumper he replayed three times, praises Zhong Chenshi for understanding the steady arc of the shot after Zhong mentions seeing the clip, and invites him to the basketball court after school, which Zhong declines due to student union affairs.",
+    "emoji": "💬",
+    "address": "<persona> 周往",
+    "duration_min": 1
+  },
+  {
+    "tick": 1,
+    "time": "08:10",
+    "persona": "周往",
+    "sector": "教学楼",
+    "arena": "高二三班教室",
+    "action": "conversing about This is a conversation about a buzzer-beater shot in the basketball game of Chengxi Middle School, where Zhou Wang excitedly talks about the amazing last-three-second fadeaway jumper he replayed three times, praises Zhong Chenshi for understanding the steady arc of the shot after Zhong mentions seeing the clip, and invites him to the basketball court after school, which Zhong declines due to student union affairs.",
+    "emoji": "💬",
+    "address": "<persona> 钟辰时",
+    "duration_min": 1
+  },
+  {
+    "tick": 2,
+    "time": "08:20",
+    "persona": "钟辰时",
+    "sector": "教学楼",
+    "arena": "高二三班教室",
+    "action": "conversing about This is a conversation about a buzzer-beater shot in the basketball game of Chengxi Middle School, where Zhou Wang excitedly talks about the amazing last-three-second fadeaway jumper he replayed three times, praises Zhong Chenshi for understanding the steady arc of the shot after Zhong mentions seeing the clip, and invites him to the basketball court after school, which Zhong declines due to student union affairs.",
+    "emoji": "💬",
+    "address": "<persona> 周往",
+    "duration_min": 1
+  },
+  {
+    "tick": 2,
+    "time": "08:20",
+    "persona": "周往",
+    "sector": "教学楼",
+    "arena": "高二三班教室",
+    "action": "conversing about This is a conversation about a buzzer-beater shot in the basketball game of Chengxi Middle School, where Zhou Wang excitedly talks about the amazing last-three-second fadeaway jumper he replayed three times, praises Zhong Chenshi for understanding the steady arc of the shot after Zhong mentions seeing the clip, and invites him to the basketball court after school, which Zhong declines due to student union affairs.",
+    "emoji": "💬",
+    "address": "<persona> 钟辰时",
+    "duration_min": 1
+  },
+  {
+    "tick": 3,
+    "time": "08:30",
+    "persona": "钟辰时",
+    "sector": "教学楼",
+    "arena": "高二三班教室",
+    "action": "conversing about This is a conversation about a buzzer-beater shot in the basketball game of Chengxi Middle School, where Zhou Wang excitedly talks about the amazing last-three-second fadeaway jumper he replayed three times, praises Zhong Chenshi for understanding the steady arc of the shot after Zhong mentions seeing the clip, and invites him to the basketball court after school, which Zhong declines due to student union affairs.",
+    "emoji": "💬",
+    "address": "<persona> 周往",
+    "duration_min": 1
+  },
+  {
+    "tick": 3,
+    "time": "08:30",
+    "persona": "周往",
+    "sector": "教学楼",
+    "arena": "高二三班教室",
+    "action": "conversing about This is a conversation about a buzzer-beater shot in the basketball game of Chengxi Middle School, where Zhou Wang excitedly talks about the amazing last-three-second fadeaway jumper he replayed three times, praises Zhong Chenshi for understanding the steady arc of the shot after Zhong mentions seeing the clip, and invites him to the basketball court after school, which Zhong declines due to student union affairs.",
+    "emoji": "💬",
+    "address": "<persona> 钟辰时",
+    "duration_min": 1
+  },
+  {
+    "tick": 4,
+    "time": "08:40",
+    "persona": "钟辰时",
+    "sector": "教学楼",
+    "arena": "高二三班教室",
+    "action": "conversing about This is a conversation about a buzzer-beater shot in the basketball game of Chengxi Middle School, where Zhou Wang excitedly talks about the amazing last-three-second fadeaway jumper he replayed three times, praises Zhong Chenshi for understanding the steady arc of the shot after Zhong mentions seeing the clip, and invites him to the basketball court after school, which Zhong declines due to student union affairs.",
+    "emoji": "💬",
+    "address": "<persona> 周往",
+    "duration_min": 1
+  },
+  {
+    "tick": 4,
+    "time": "08:40",
+    "persona": "周往",
+    "sector": "教学楼",
+    "arena": "高二三班教室",
+    "action": "conversing about This is a conversation about a buzzer-beater shot in the basketball game of Chengxi Middle School, where Zhou Wang excitedly talks about the amazing last-three-second fadeaway jumper he replayed three times, praises Zhong Chenshi for understanding the steady arc of the shot after Zhong mentions seeing the clip, and invites him to the basketball court after school, which Zhong declines due to student union affairs.",
+    "emoji": "💬",
+    "address": "<persona> 钟辰时",
+    "duration_min": 1
+  },
+  {
+    "tick": 5,
+    "time": "08:50",
+    "persona": "钟辰时",
+    "sector": "教学楼",
+    "arena": "高二三班教室",
+    "action": "conversing about This is a conversation about a buzzer-beater shot in the basketball game of Chengxi Middle School, where Zhou Wang excitedly talks about the amazing last-three-second fadeaway jumper he replayed three times, praises Zhong Chenshi for understanding the steady arc of the shot after Zhong mentions seeing the clip, and invites him to the basketball court after school, which Zhong declines due to student union affairs.",
+    "emoji": "💬",
+    "address": "<persona> 周往",
+    "duration_min": 1
+  },
+  {
+    "tick": 5,
+    "time": "08:50",
+    "persona": "周往",
+    "sector": "教学楼",
+    "arena": "高二三班教室",
+    "action": "conversing about This is a conversation about a buzzer-beater shot in the basketball game of Chengxi Middle School, where Zhou Wang excitedly talks about the amazing last-three-second fadeaway jumper he replayed three times, praises Zhong Chenshi for understanding the steady arc of the shot after Zhong mentions seeing the clip, and invites him to the basketball court after school, which Zhong declines due to student union affairs.",
+    "emoji": "💬",
+    "address": "<persona> 钟辰时",
+    "duration_min": 1
+  }
+]

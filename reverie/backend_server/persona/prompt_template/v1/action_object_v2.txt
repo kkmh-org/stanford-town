@@ -29,4 +29,4 @@ Pick ONE most relevant object from the objects available: phone
 ---
 Current activity: !<INPUT 0>!
 Objects available: {!<INPUT 1>!}
-Pick ONE most relevant object from the objects available:
+Pick ONE most relevant object from the objects available (output ONLY the object name, no explanation):

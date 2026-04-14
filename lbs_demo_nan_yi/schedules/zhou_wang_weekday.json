@@ -1,0 +1,192 @@
+{
+  "character_id": "zhou_wang",
+  "display_name": "周往",
+  "grade_class": "高二·三班",
+  "notes": "性格：炸毛直给、争强好胜、运动型、嘴硬心软；比钟辰时晚约 30 分钟起床",
+  "blocks": [
+    {
+      "start": "06:40",
+      "end": "07:10",
+      "activity": "起床",
+      "location": null,
+      "mood": "起床气",
+      "interruptible": false
+    },
+    {
+      "start": "07:10",
+      "end": "07:25",
+      "activity": "骑车上学",
+      "location": "南一高中:校门口:校门区",
+      "mood": "精力充沛",
+      "interruptible": false
+    },
+    {
+      "start": "07:25",
+      "end": "07:30",
+      "activity": "到教室，跟同学闲聊",
+      "location": "南一高中:教学楼:高二三班教室",
+      "mood": "活跃",
+      "interruptible": true,
+      "priority": "P3"
+    },
+    {
+      "start": "07:30",
+      "end": "08:00",
+      "activity": "早自习",
+      "location": "南一高中:教学楼:高二三班教室",
+      "mood": "勉强专注",
+      "interruptible": false,
+      "priority": "P0"
+    },
+    {
+      "start": "08:00",
+      "end": "09:05",
+      "activity": "上课",
+      "location": "南一高中:教学楼:高二三班教室",
+      "mood": "坐不住",
+      "interruptible": false,
+      "priority": "P0"
+    },
+    {
+      "start": "09:05",
+      "end": "09:15",
+      "activity": "课间买零食",
+      "location": "南一高中:小卖部:店内",
+      "mood": "活跃",
+      "interruptible": true,
+      "priority": "P2"
+    },
+    {
+      "start": "09:15",
+      "end": "10:15",
+      "activity": "上课",
+      "location": "南一高中:教学楼:高二三班教室",
+      "mood": "坐不住",
+      "interruptible": false,
+      "priority": "P0"
+    },
+    {
+      "start": "10:15",
+      "end": "10:25",
+      "activity": "课间操",
+      "location": "南一高中:操场:篮球场",
+      "mood": "积极",
+      "interruptible": true,
+      "priority": "P2"
+    },
+    {
+      "start": "10:25",
+      "end": "12:00",
+      "activity": "上课",
+      "location": "南一高中:教学楼:高二三班教室",
+      "mood": "坐不住",
+      "interruptible": false,
+      "priority": "P0"
+    },
+    {
+      "start": "12:00",
+      "end": "12:30",
+      "activity": "午饭（吃得快）",
+      "location": "南一高中:食堂:二楼窗口",
+      "mood": "风卷残云",
+      "interruptible": true,
+      "priority": "P2"
+    },
+    {
+      "start": "12:30",
+      "end": "13:30",
+      "activity": "打篮球",
+      "location": "南一高中:操场:篮球场",
+      "mood": "最兴奋",
+      "interruptible": false,
+      "priority": "P1"
+    },
+    {
+      "start": "13:30",
+      "end": "15:10",
+      "activity": "下午上课",
+      "location": "南一高中:教学楼:高二三班教室",
+      "mood": "困",
+      "interruptible": false,
+      "priority": "P0"
+    },
+    {
+      "start": "15:10",
+      "end": "15:20",
+      "activity": "课间在走廊晃",
+      "location": "南一高中:教学楼:走廊",
+      "mood": "无聊",
+      "interruptible": true,
+      "priority": "P3"
+    },
+    {
+      "start": "15:20",
+      "end": "17:00",
+      "activity": "下午上课",
+      "location": "南一高中:教学楼:高二三班教室",
+      "mood": "困",
+      "interruptible": false,
+      "priority": "P0"
+    },
+    {
+      "start": "17:00",
+      "end": "17:10",
+      "activity": "放学",
+      "location": "南一高中:教学楼:高二三班教室",
+      "mood": "解放了",
+      "interruptible": true,
+      "priority": "P3"
+    },
+    {
+      "start": "17:10",
+      "end": "18:30",
+      "activity": "篮球/体育活动",
+      "location": "南一高中:操场:篮球场",
+      "mood": "全力以赴",
+      "interruptible": false,
+      "priority": "P1"
+    },
+    {
+      "start": "18:30",
+      "end": "18:45",
+      "activity": "去咖啡厅买饮料",
+      "location": "南一高中:咖啡厅:点单台",
+      "mood": "运动后放松",
+      "interruptible": true,
+      "priority": "P2"
+    },
+    {
+      "start": "18:45",
+      "end": "19:00",
+      "activity": "在后门小花园坐会儿",
+      "location": "南一高中:后门小花园:花园",
+      "mood": "安静（罕见）",
+      "interruptible": true,
+      "priority": "P3"
+    },
+    {
+      "start": "19:00",
+      "end": "19:30",
+      "activity": "回家",
+      "location": "南一高中:校门口:校门区",
+      "mood": "正常",
+      "interruptible": false
+    },
+    {
+      "start": "19:30",
+      "end": "21:00",
+      "activity": "在家吃饭、休息",
+      "location": null,
+      "mood": "正常",
+      "interruptible": false
+    },
+    {
+      "start": "21:00",
+      "end": "23:00",
+      "activity": "睡前放松",
+      "location": null,
+      "mood": "正常",
+      "interruptible": false
+    }
+  ]
+}

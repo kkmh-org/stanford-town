@@ -953,17 +953,48 @@ def run_gpt_prompt_action_sector_v2(action_description, persona, maze,
     prompt = generate_prompt(prompt_input, "persona/prompt_template/v1/action_location_sector_v1.txt")
 
     def clean_up(raw, p=""):
-        return raw.split("}")[0]
+        return raw.split("}")[0].strip().strip("{").strip()
 
     def validate(val, p=""):
-        return len(val.strip()) > 0 and "," not in val
+        if not val.strip() or "," in val:
+            return False
+        if any(kw in val for kw in ["无法", "解答", "抱歉", "矛盾", "题目", "需要指出"]):
+            return False
+        return True
 
-    output = run_prompt_str(prompt, clean_up, validate,
-                            fail_safe="kitchen", repeat=5, verbose=verbose)
+    living_sector = persona.scratch.living_area.split(":")[1] if ":" in persona.scratch.living_area else ""
+
+    def _validate_sector(val, p=""):
+        if not val.strip() or "," in val:
+            return False
+        if any(kw in val for kw in ["无法", "解答", "抱歉", "矛盾", "题目", "需要指出"]):
+            return False
+        return True
+
+    output = run_prompt_str(prompt, clean_up, _validate_sector,
+                            fail_safe=living_sector, repeat=5, verbose=verbose)
 
     x = [i.strip() for i in persona.s_mem.get_str_accessible_sectors(act_world).split(",")]
     if output not in x:
-        output = persona.scratch.living_area.split(":")[1]
+        # Smart fallback: try to match activity description keywords to sectors
+        _ad_lower = action_description.lower()
+        _sector_hints = {
+            "教学楼": ["上课", "课堂", "教室", "自习", "class", "study", "lecture"],
+            "食堂": ["午饭", "吃饭", "lunch", "dinner", "eating", "cafeteria", "食堂"],
+            "操场": ["跑步", "篮球", "运动", "体育", "球场", "jogging", "basketball", "sport"],
+            "图书馆": ["看书", "阅读", "读书", "library", "reading", "book"],
+            "天台": ["天台", "独处", "rooftop"],
+            "行政楼": ["学生会", "办公", "student union", "council", "office"],
+            "咖啡厅": ["咖啡", "饮料", "coffee", "cafe", "drink"],
+            "小卖部": ["零食", "买", "snack", "buy", "shop"],
+            "后门小花园": ["花园", "小花园", "garden"],
+        }
+        matched = living_sector
+        for sector, keywords in _sector_hints.items():
+            if sector in x and any(kw in _ad_lower or kw in action_description for kw in keywords):
+                matched = sector
+                break
+        output = matched
 
     return output, [output, prompt, None, prompt_input, None]
 
@@ -987,13 +1018,18 @@ def run_gpt_prompt_action_arena_v2(action_description, persona, maze,
     prompt = generate_prompt(prompt_input, "persona/prompt_template/v1/action_location_object_vMar11.txt")
 
     def clean_up(raw, p=""):
-        return raw.split("}")[0]
+        return raw.split("}")[0].strip().strip("{").strip()
 
     def validate(val, p=""):
-        return len(val.strip()) > 0 and "," not in val
+        if not val.strip() or "," in val:
+            return False
+        if any(kw in val for kw in ["无法", "解答", "抱歉", "矛盾", "题目", "需要指出"]):
+            return False
+        return True
 
+    arena_fail_safe = fin[0] if fin else "classroom"
     output = run_prompt_str(prompt, clean_up, validate,
-                            fail_safe="kitchen", repeat=5, verbose=verbose)
+                            fail_safe=arena_fail_safe, repeat=5, verbose=verbose)
     return output, [output, prompt, None, prompt_input, None]
 
 
@@ -1007,15 +1043,18 @@ def run_gpt_prompt_action_game_object_v2(action_description, persona, maze,
     prompt = generate_prompt(prompt_input, "persona/prompt_template/v1/action_object_v2.txt")
 
     def clean_up(raw, p=""):
-        return raw.strip()
+        return raw.strip().split("\n")[0].strip()
 
     def validate(val, p=""):
-        return len(val) > 0
-
-    output = run_prompt_str(prompt, clean_up, validate,
-                            fail_safe="bed", repeat=5, verbose=verbose)
+        if not val or "无法" in val or "解答" in val or "抱歉" in val:
+            return False
+        return True
 
     x = [i.strip() for i in objects_str.split(",")]
+    obj_fail_safe = x[0] if x else "desk"
+    output = run_prompt_str(prompt, clean_up, validate,
+                            fail_safe=obj_fail_safe, repeat=5, verbose=verbose)
+
     if output not in x:
         output = _random.choice(x)
     return output, [output, prompt, None, prompt_input, None]
@@ -1095,7 +1134,7 @@ def run_gpt_prompt_new_decomp_schedule_v2(persona, main_act_dur,
 
     output = run_prompt_str(prompt, clean_up, validate,
                             fail_safe=get_fail_safe(),
-                            repeat=5, verbose=verbose)
+                            repeat=2, verbose=verbose)
     return output, [output, prompt, None, prompt_input, None]
 
 

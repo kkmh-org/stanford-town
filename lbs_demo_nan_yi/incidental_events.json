@@ -1,0 +1,64 @@
+{
+  "version": "2026-04-14",
+  "events": [
+    {
+      "id": "pop_quiz",
+      "name": "班级临时测验",
+      "trigger": { "type": "random", "p": 0.1, "on": "weekday" },
+      "affects": ["all_class"],
+      "schedule_effect": "取消课间活动",
+      "mood_effect": { "zhong_chenshi": "平静", "zhou_wang": "烦躁" }
+    },
+    {
+      "id": "basketball_win",
+      "name": "篮球赛赢了",
+      "trigger": { "type": "context", "when": "zhou_wang_at_basketball" },
+      "affects": ["zhou_wang"],
+      "schedule_effect": "可能多待一会儿",
+      "mood_effect": { "zhou_wang": "兴奋+得意" },
+      "mutex_group": "basketball_result"
+    },
+    {
+      "id": "basketball_loss",
+      "name": "篮球赛输了",
+      "trigger": { "type": "context", "when": "zhou_wang_at_basketball" },
+      "affects": ["zhou_wang"],
+      "schedule_effect": "可能改去后门小花园",
+      "mood_effect": { "zhou_wang": "炸毛+沉默" },
+      "side_effect": { "zhou_wang": { "do_not_disturb_may_trigger": true } },
+      "mutex_group": "basketball_result"
+    },
+    {
+      "id": "father_call_zhong",
+      "name": "钟辰时父亲来电",
+      "trigger": { "type": "random", "p": 0.05 },
+      "affects": ["zhong_chenshi"],
+      "schedule_effect": "回复变短，日记可能搁置",
+      "mood_effect": { "zhong_chenshi": "压抑→焦虑" }
+    },
+    {
+      "id": "canteen_special",
+      "name": "食堂出了好菜",
+      "trigger": { "type": "random", "p": 0.15 },
+      "affects": ["all"],
+      "schedule_effect": "午饭时间可能延长",
+      "mood_effect": { "all": "微小满足" }
+    },
+    {
+      "id": "rain",
+      "name": "下雨",
+      "trigger": { "type": "random", "p": 0.2 },
+      "affects": ["all"],
+      "schedule_effect": "操场活动取消，改咖啡厅/图书馆",
+      "mood_effect": { "zhou_wang": "烦躁", "zhong_chenshi": "不在意" }
+    },
+    {
+      "id": "student_council_urgent",
+      "name": "学生会有紧急事务",
+      "trigger": { "type": "random", "p": 0.15 },
+      "affects": ["zhong_chenshi"],
+      "schedule_effect": "放学后加班",
+      "mood_effect": { "zhong_chenshi": "认真但疲惫" }
+    }
+  ]
+}

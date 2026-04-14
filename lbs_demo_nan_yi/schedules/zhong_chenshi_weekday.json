@@ -1,0 +1,191 @@
+{
+  "character_id": "zhong_chenshi",
+  "display_name": "钟辰时",
+  "grade_class": "高二·三班",
+  "notes": "基于 soul_dna 第五节；location 为 null 表示在校外/家中，未单独建模",
+  "blocks": [
+    {
+      "start": "06:10",
+      "end": "07:00",
+      "activity": "起床洗漱",
+      "location": null,
+      "mood": "机械、安静",
+      "interruptible": false
+    },
+    {
+      "start": "07:00",
+      "end": "07:15",
+      "activity": "步行上学（途中）",
+      "location": null,
+      "mood": "封闭独处",
+      "interruptible": false
+    },
+    {
+      "start": "07:15",
+      "end": "07:30",
+      "activity": "到校、走向教室",
+      "location": "南一高中:校门口:校门区",
+      "mood": "封闭独处",
+      "interruptible": false
+    },
+    {
+      "start": "07:30",
+      "end": "08:00",
+      "activity": "早自习",
+      "location": "南一高中:教学楼:高二三班教室",
+      "mood": "专注",
+      "interruptible": false,
+      "priority": "P0"
+    },
+    {
+      "start": "08:00",
+      "end": "09:05",
+      "activity": "上课",
+      "location": "南一高中:教学楼:高二三班教室",
+      "mood": "正常",
+      "interruptible": false,
+      "priority": "P0"
+    },
+    {
+      "start": "09:05",
+      "end": "09:15",
+      "activity": "课间休息",
+      "location": "南一高中:教学楼:走廊",
+      "mood": "观察者模式",
+      "interruptible": true,
+      "priority": "P3"
+    },
+    {
+      "start": "09:15",
+      "end": "10:15",
+      "activity": "上课",
+      "location": "南一高中:教学楼:高二三班教室",
+      "mood": "正常",
+      "interruptible": false,
+      "priority": "P0"
+    },
+    {
+      "start": "10:15",
+      "end": "10:25",
+      "activity": "课间操",
+      "location": "南一高中:操场:跑道",
+      "mood": "应付",
+      "interruptible": true,
+      "priority": "P2"
+    },
+    {
+      "start": "10:25",
+      "end": "12:00",
+      "activity": "上课",
+      "location": "南一高中:教学楼:高二三班教室",
+      "mood": "正常",
+      "interruptible": false,
+      "priority": "P0"
+    },
+    {
+      "start": "12:00",
+      "end": "12:20",
+      "activity": "午饭",
+      "location": "南一高中:食堂:一楼窗口",
+      "mood": "一般",
+      "interruptible": true,
+      "priority": "P2"
+    },
+    {
+      "start": "12:20",
+      "end": "13:30",
+      "activity": "午休独处",
+      "location": "南一高中:天台:平台",
+      "mood": "最放松",
+      "interruptible": true,
+      "priority": "P3",
+      "notes": "高频可互动时段；有时也会去图书馆阅读区"
+    },
+    {
+      "start": "13:30",
+      "end": "15:10",
+      "activity": "下午上课",
+      "location": "南一高中:教学楼:高二三班教室",
+      "mood": "正常",
+      "interruptible": false,
+      "priority": "P0"
+    },
+    {
+      "start": "15:10",
+      "end": "15:20",
+      "activity": "课间休息",
+      "location": "南一高中:教学楼:走廊",
+      "mood": "正常",
+      "interruptible": true,
+      "priority": "P3"
+    },
+    {
+      "start": "15:20",
+      "end": "17:00",
+      "activity": "下午上课",
+      "location": "南一高中:教学楼:高二三班教室",
+      "mood": "正常",
+      "interruptible": false,
+      "priority": "P0"
+    },
+    {
+      "start": "17:00",
+      "end": "17:30",
+      "activity": "放学整理、前往学生会",
+      "location": "南一高中:教学楼:走廊",
+      "mood": "切换模式",
+      "interruptible": true,
+      "priority": "P2"
+    },
+    {
+      "start": "17:30",
+      "end": "18:00",
+      "activity": "学生会工作",
+      "location": "南一高中:行政楼:学生会办公室",
+      "mood": "认真",
+      "interruptible": false,
+      "priority": "P1"
+    },
+    {
+      "start": "18:00",
+      "end": "18:30",
+      "activity": "离校步行",
+      "location": "南一高中:校门口:校门区",
+      "mood": "从学校切回自己",
+      "interruptible": false
+    },
+    {
+      "start": "18:30",
+      "end": "20:15",
+      "activity": "在家休息、吃晚饭",
+      "location": null,
+      "mood": "平静",
+      "interruptible": false
+    },
+    {
+      "start": "20:15",
+      "end": "20:45",
+      "activity": "写日记",
+      "location": null,
+      "mood": "整理信息",
+      "interruptible": false
+    },
+    {
+      "start": "20:45",
+      "end": "21:50",
+      "activity": "跑步",
+      "location": "南一高中:操场:跑道",
+      "mood": "头脑清醒",
+      "interruptible": true,
+      "priority": "P2"
+    },
+    {
+      "start": "21:50",
+      "end": "23:00",
+      "activity": "睡前",
+      "location": null,
+      "mood": "最卸下防备",
+      "interruptible": false
+    }
+  ]
+}
