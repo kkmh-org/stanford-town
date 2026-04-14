@@ -274,10 +274,9 @@ _WAKE_UP_PROMPT = ChatPromptTemplate.from_messages([("human",
 _DAILY_PLAN_PROMPT = ChatPromptTemplate.from_messages([("human",
     "{iss}\n\n"
     "In general, {lifestyle}\n"
-    "Today is {date}. Here is {name}'s plan today in broad-strokes "
-    "(with the time of the day. e.g., have a lunch at 12:00 pm, "
-    "watch TV from 7 to 8 pm): "
-    "1) wake up and complete the morning routine at {wake_up_time}, 2)"
+    "Today is {date}. 请用中文写出 {name} 今天的日程大纲 "
+    "（标注时间，例如：12:00 pm 吃午饭，7 to 8 pm 看电视）：\n"
+    "1) {wake_up_time} 起床完成晨间流程, 2)"
 )])
 
 
@@ -346,8 +345,8 @@ def run_gpt_prompt_daily_plan_v2(persona, wake_up_hour,
 
 _SUMMARIZE_CONVERSATION_PROMPT = ChatPromptTemplate.from_messages([("human",
     "Conversation:\n{conversation}\n\n"
-    "Summarize the conversation above in one sentence:\n"
-    "This is a conversation about"
+    "用一句中文总结上面的对话内容：\n"
+    "这是一段关于"
 )])
 
 _KEYWORD_TO_THOUGHTS_PROMPT = ChatPromptTemplate.from_messages([("human",
@@ -627,7 +626,8 @@ _SAFETY_SCORE_PROMPT = ChatPromptTemplate.from_messages([("human",
 _HOURLY_SCHEDULE_PROMPT = ChatPromptTemplate.from_messages([("human",
     "Hourly schedule format:\n{schedule_format}\n===\n"
     "{iss}\n{prior_schedule}\n"
-    "{intermission}{intermission2}\n{prompt_ending}"
+    "{intermission}{intermission2}\n"
+    "请用中文描述活动内容。\n{prompt_ending}"
 )])
 
 
