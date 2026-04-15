@@ -207,12 +207,31 @@ function clean(raw){
 function buildTimeline(){
   const container=document.getElementById('tlScroll');
   let html='';
+  // Merge consecutive ticks with identical activities per persona
+  let merged=[];  // [{startTick, endTick, time_start, time_end, entries:[{persona,action,sector,arena,emoji}]}]
+  let prev={};    // persona -> last action string
   tickNums.forEach((tn,idx)=>{
     const entries=ticks[tn]||[];
     const time=entries[0]?.time||'--:--';
-    html+=`<div class="tl-tick" id="tl-tick-${tn}">`;
-    html+=`<div class="tl-tick-time" id="tl-time-${tn}">${time}</div>`;
+    let changed=false;
     entries.forEach(e=>{
+      const act=clean(e.action);
+      if(prev[e.persona]!==act)changed=true;
+    });
+    if(changed||merged.length===0){
+      merged.push({startTick:tn,endTick:tn,time_start:time,time_end:time,entries});
+      entries.forEach(e=>{prev[e.persona]=clean(e.action)});
+    }else{
+      merged[merged.length-1].endTick=tn;
+      merged[merged.length-1].time_end=time;
+    }
+  });
+
+  merged.forEach((m,mi)=>{
+    const timeLabel=m.time_start===m.time_end?m.time_start:`${m.time_start} - ${m.time_end}`;
+    html+=`<div class="tl-tick" id="tl-tick-${m.startTick}">`;
+    html+=`<div class="tl-tick-time" id="tl-time-${m.startTick}">${timeLabel}</div>`;
+    m.entries.forEach(e=>{
       const isZ=e.persona==='钟辰时';
       const action=clean(e.action);
       const isConvo=action.startsWith('conversing')||action.includes('对话')||action.includes('问候');
@@ -225,13 +244,15 @@ function buildTimeline(){
             <span class="tl-persona">${e.persona}</span>
             <span class="tl-loc">📍 ${sector}${arena?' · '+arena:''}</span>
           </div>
-          <div class="tl-action ${isConvo?'convo':''}">${action.length>100?action.slice(0,100)+'…':action}</div>
+          <div class="tl-action ${isConvo?'convo':''}">${action.length>120?action.slice(0,120)+'…':action}</div>
         </div>
       </div>`;
     });
     html+=`</div>`;
   });
-  container.innerHTML=html}
+  container.innerHTML=html;
+  // Store merged for highlight
+  window._merged=merged}
 
 function moveAvatar(cls,sector){
   const pos=POS[sector]||POS["校门口"];
@@ -247,26 +268,24 @@ function renderTick(tickNum){
   document.getElementById('tickInfo').textContent=`第 ${currentIdx+1} / ${tickNums.length} 步`;
   entries.forEach(e=>{moveAvatar(e.persona==='钟辰时'?'z':'w',e.sector||'校门口')});
 
-  // Highlight current tick in timeline, dim others
-  tickNums.forEach(tn=>{
-    const timeEl=document.getElementById(`tl-time-${tn}`);
-    const tickEl=document.getElementById(`tl-tick-${tn}`);
-    if(!timeEl||!tickEl)return;
-    if(tn===tickNum){
-      timeEl.classList.add('current');
-      tickEl.style.opacity='1';
-    }else if(tn>tickNum){
-      timeEl.classList.remove('current');
-      tickEl.style.opacity='.25';
-    }else{
-      timeEl.classList.remove('current');
-      tickEl.style.opacity='.6';
-    }
-  });
-
-  // Scroll to current tick
-  const el=document.getElementById(`tl-tick-${tickNum}`);
-  if(el)el.scrollIntoView({behavior:'smooth',block:'center'})}
+  // Highlight current merged group
+  if(window._merged){
+    window._merged.forEach(m=>{
+      const timeEl=document.getElementById(`tl-time-${m.startTick}`);
+      const tickEl=document.getElementById(`tl-tick-${m.startTick}`);
+      if(!timeEl||!tickEl)return;
+      const isCurrent=tickNum>=m.startTick&&tickNum<=m.endTick;
+      const isPast=tickNum>m.endTick;
+      if(isCurrent){
+        timeEl.classList.add('current');tickEl.style.opacity='1';
+      }else if(isPast){
+        timeEl.classList.remove('current');tickEl.style.opacity='.6';
+      }else{
+        timeEl.classList.remove('current');tickEl.style.opacity='.25';
+      }
+      if(isCurrent)tickEl.scrollIntoView({behavior:'smooth',block:'center'});
+    });
+  }}
 
 function step(dir){const n=currentIdx+dir;if(n<0||n>=tickNums.length)return;currentIdx=n;renderTick(tickNums[currentIdx])}
 function play(){document.getElementById('btnPlay').disabled=true;document.getElementById('btnPause').disabled=false;
