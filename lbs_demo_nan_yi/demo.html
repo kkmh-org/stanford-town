@@ -5,130 +5,99 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>角色世界模拟器 — 南一高中</title>
 <style>
-:root{--bg:#2d5a27;--card:#1a1d22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;
-      --accent:#58a6ff;--zhong:#4a90d9;--zhou:#e8734a;--green:#3fb950}
+:root{--bg:#2d5a27;--card:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;
+      --accent:#58a6ff;--zhong:#4a90d9;--zhou:#e8734a}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:"PingFang SC","Helvetica Neue",sans-serif;background:#1a1d22;color:var(--text);overflow:hidden;height:100vh}
+body{font-family:"PingFang SC","Helvetica Neue",sans-serif;background:#1a1d22;color:var(--text);overflow:hidden;height:100vh;display:flex;flex-direction:column}
 
-.header{height:48px;display:flex;align-items:center;padding:0 20px;background:#161b22;border-bottom:1px solid var(--border);gap:12px}
-.header h1{font-size:15px;font-weight:600}
-.header .badge{font-size:11px;background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px}
-.header .time-big{margin-left:auto;font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;color:#fff;
-  text-shadow:0 0 12px rgba(88,166,255,.5)}
+/* === Top Bar === */
+.topbar{height:48px;display:flex;align-items:center;padding:0 20px;background:#161b22;border-bottom:1px solid var(--border);gap:10px;flex-shrink:0}
+.topbar h1{font-size:15px;font-weight:600}
+.topbar .badge{font-size:10px;background:var(--accent);color:#fff;padding:2px 7px;border-radius:4px}
+.topbar .time-big{font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 0 10px rgba(88,166,255,.4);margin-left:12px}
+.topbar .sep{flex:1}
+.topbar button{background:#21262d;color:var(--text);border:1px solid var(--border);padding:5px 14px;border-radius:5px;cursor:pointer;font-size:12px;transition:.15s}
+.topbar button:hover{border-color:var(--accent);color:var(--accent)}
+.topbar button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.topbar button:disabled{opacity:.3;cursor:default}
+.topbar select{background:#21262d;color:var(--text);border:1px solid var(--border);padding:5px;border-radius:5px;font-size:12px}
+.topbar .info{color:var(--muted);font-size:12px}
 
-.controls{height:40px;display:flex;align-items:center;padding:0 20px;gap:6px;background:#161b22;border-bottom:1px solid var(--border)}
-.controls button{background:#21262d;color:var(--text);border:1px solid var(--border);padding:4px 12px;border-radius:5px;cursor:pointer;font-size:11px;transition:.15s}
-.controls button:hover{border-color:var(--accent);color:var(--accent)}
-.controls button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-.controls button:disabled{opacity:.3;cursor:default}
-.controls select{background:#21262d;color:var(--text);border:1px solid var(--border);padding:4px;border-radius:5px;font-size:11px}
-.controls .info{color:var(--muted);font-size:11px;margin-left:auto}
+/* === Main: Map left + Timeline right === */
+.main-row{flex:1;display:grid;grid-template-columns:1fr 560px;overflow:hidden}
 
-.main{display:grid;grid-template-columns:1fr 360px;height:calc(100vh - 88px)}
-
-/* ===== Campus Map ===== */
-.map-wrap{position:relative;overflow:hidden;background:#3a7a32;
+/* Map */
+.map-wrap{position:relative;overflow:hidden;
+  background:#3a7a32;
   background-image:radial-gradient(circle at 20% 80%,#2d6a25 0%,transparent 50%),
-                   radial-gradient(circle at 80% 20%,#4a8a42 0%,transparent 40%),
-                   radial-gradient(circle at 50% 50%,#3a7a32 0%,#2d6a25 100%)}
-.campus{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.95);width:820px;height:560px}
+                   radial-gradient(circle at 80% 20%,#4a8a42 0%,transparent 40%)}
+.campus{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:820px;height:520px}
 
-/* Roads */
 .road{position:absolute;background:#c4b896;border:1px solid #a89a70}
-.road-h{height:12px}.road-v{width:12px}
-
-/* Grass patches */
-.grass{position:absolute;border-radius:50%;opacity:.3}
-.grass-1{background:#5a9a50}.grass-2{background:#4a8a40}
-
-/* Trees */
-.tree{position:absolute;width:16px;height:16px;border-radius:50%;background:#2a6a22;
-  box-shadow:0 2px 4px rgba(0,0,0,.3)}
-.tree::after{content:'';position:absolute;width:4px;height:6px;background:#5a4020;
-  bottom:-4px;left:6px;border-radius:1px}
-
-/* Buildings */
-.bld{position:absolute;border-radius:4px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;cursor:default;transition:.3s;
-  box-shadow:2px 3px 8px rgba(0,0,0,.4);overflow:visible;z-index:2}
-.bld .roof{position:absolute;top:-6px;left:-3px;right:-3px;height:8px;border-radius:3px 3px 0 0}
-.bld .b-name{font-size:10px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);z-index:1;text-align:center;line-height:1.2}
-.bld .b-sub{font-size:8px;color:rgba(255,255,255,.7);z-index:1}
-.bld.active{box-shadow:0 0 20px rgba(88,166,255,.4);z-index:5}
-
-/* Building colors */
-.bld-teach{background:linear-gradient(135deg,#6a5a4a,#5a4a3a);}.bld-teach .roof{background:#8a7a6a}
-.bld-admin{background:linear-gradient(135deg,#5a6a7a,#4a5a6a);}.bld-admin .roof{background:#7a8a9a}
-.bld-lib{background:linear-gradient(135deg,#7a6a5a,#6a5a4a);}.bld-lib .roof{background:#9a8a7a}
-.bld-cafe{background:linear-gradient(135deg,#8a6a4a,#7a5a3a);}.bld-cafe .roof{background:#aa8a6a}
-.bld-canteen{background:linear-gradient(135deg,#6a6a5a,#5a5a4a);}.bld-canteen .roof{background:#8a8a7a}
-.bld-shop{background:linear-gradient(135deg,#7a6a5a,#6a5a4a);}.bld-shop .roof{background:#9a8a7a}
+.tree{position:absolute;width:14px;height:14px;border-radius:50%;background:#2a6a22;box-shadow:0 2px 4px rgba(0,0,0,.3)}
+.tree::after{content:'';position:absolute;width:3px;height:5px;background:#5a4020;bottom:-3px;left:5.5px;border-radius:1px}
+.bld{position:absolute;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:2px 3px 8px rgba(0,0,0,.4);z-index:2;transition:.3s}
+.bld .roof{position:absolute;top:-5px;left:-2px;right:-2px;height:7px;border-radius:3px 3px 0 0}
+.bld .b-name{font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);z-index:1;text-align:center}
+.bld .b-sub{font-size:8px;color:rgba(255,255,255,.6);z-index:1}
+.bld.active{box-shadow:0 0 20px rgba(88,166,255,.35);z-index:5}
+.bld-teach{background:linear-gradient(135deg,#6a5a4a,#5a4a3a)}.bld-teach .roof{background:#8a7a6a}
+.bld-admin{background:linear-gradient(135deg,#5a6a7a,#4a5a6a)}.bld-admin .roof{background:#7a8a9a}
+.bld-lib{background:linear-gradient(135deg,#7a6a5a,#6a5a4a)}.bld-lib .roof{background:#9a8a7a}
+.bld-cafe{background:linear-gradient(135deg,#8a6a4a,#7a5a3a)}.bld-cafe .roof{background:#aa8a6a}
+.bld-canteen{background:linear-gradient(135deg,#6a6a5a,#5a5a4a)}.bld-canteen .roof{background:#8a8a7a}
+.bld-shop{background:linear-gradient(135deg,#7a6a5a,#6a5a4a)}.bld-shop .roof{background:#9a8a7a}
 .bld-gate{background:linear-gradient(135deg,#8a8a8a,#6a6a6a);border:2px solid #aaa}
-
-/* 操场 special */
+.bld-roof-top{background:linear-gradient(135deg,#7a7a7a,#5a5a5a)}.bld-roof-top .roof{background:#9a9a9a}
 .field{position:absolute;border-radius:6px;background:#5a8a4a;border:2px solid #fff;z-index:1}
 .court{position:absolute;border:1.5px solid rgba(255,255,255,.6);border-radius:3px}
-.court-circle{position:absolute;width:30px;height:30px;border:1.5px solid rgba(255,255,255,.6);border-radius:50%}
+.court-circle{position:absolute;width:28px;height:28px;border:1.5px solid rgba(255,255,255,.6);border-radius:50%}
 .track{position:absolute;border:1.5px solid rgba(255,255,255,.4);border-radius:40px}
+.garden{position:absolute;border-radius:8px;background:linear-gradient(135deg,#4a8a40,#3a7a30);border:1px dashed rgba(255,255,255,.3);z-index:1}
+.flower{position:absolute;width:5px;height:5px;border-radius:50%}
 
-/* 天台 */
-.bld-roof-top{background:linear-gradient(135deg,#7a7a7a,#5a5a5a);}.bld-roof-top .roof{background:#9a9a9a}
+.map-avatar{position:absolute;z-index:10;display:flex;flex-direction:column;align-items:center;
+  transition:left .8s ease,top .8s ease;pointer-events:none}
+.av-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5);border:2px solid #fff;position:relative}
+.av-dot.z{background:var(--zhong)}.av-dot.w{background:var(--zhou)}
+.av-dot .pulse{position:absolute;inset:-4px;border-radius:50%;border:2px solid;animation:pulse 2s infinite}
+.av-dot.z .pulse{border-color:var(--zhong)}.av-dot.w .pulse{border-color:var(--zhou)}
+@keyframes pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.5);opacity:0}}
+.av-label{margin-top:3px;font-size:9px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:1px 6px;border-radius:3px;white-space:nowrap}
+.map-label{position:absolute;font-size:13px;color:rgba(255,255,255,.2);font-weight:700;z-index:0;pointer-events:none}
 
-/* 花园 */
-.garden{position:absolute;border-radius:8px;background:linear-gradient(135deg,#4a8a40,#3a7a30);
-  border:1px dashed rgba(255,255,255,.3);z-index:1}
-.flower{position:absolute;width:6px;height:6px;border-radius:50%}
+/* === Right Timeline Panel === */
+.timeline-panel{background:#161b22;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.tl-header{padding:14px 20px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--muted);flex-shrink:0}
+.tl-scroll{flex:1;overflow-y:auto;padding:0 20px 20px}
 
-/* Avatars on map */
-.map-avatar{position:absolute;width:28px;height:28px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
-  color:#fff;z-index:10;transition:left .8s ease,top .8s ease;
-  box-shadow:0 2px 8px rgba(0,0,0,.5)}
-.map-avatar.z{background:var(--zhong);border:2px solid #fff}
-.map-avatar.w{background:var(--zhou);border:2px solid #fff}
-.map-avatar .pulse{position:absolute;inset:-4px;border-radius:50%;border:2px solid;animation:pulse 2s infinite}
-.map-avatar.z .pulse{border-color:var(--zhong)}.map-avatar.w .pulse{border-color:var(--zhou)}
-@keyframes pulse{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.6);opacity:0}}
+/* Timeline item */
+.tl-tick{margin-top:16px}
+.tl-tick-time{font-size:18px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.tl-tick-time.current{color:#fff;text-shadow:0 0 8px rgba(88,166,255,.5)}
+.tl-entry{display:flex;gap:12px;margin-bottom:12px}
+.tl-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;flex-shrink:0;margin-top:2px}
+.tl-avatar.z{background:var(--zhong)}.tl-avatar.w{background:var(--zhou)}
+.tl-body{flex:1;min-width:0}
+.tl-name-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.tl-persona{font-size:14px;font-weight:600}
+.tl-loc{font-size:11px;color:var(--muted)}
+.tl-action{font-size:13px;line-height:1.6;color:var(--text)}
+.tl-action.convo{color:var(--accent);font-style:italic}
+.tl-line{width:2px;background:var(--border);margin:0 15px;flex-shrink:0}
 
-/* Speech bubble */
-.bubble{position:absolute;background:rgba(0,0,0,.85);color:#fff;font-size:9px;line-height:1.4;
-  padding:6px 10px;border-radius:8px;max-width:180px;z-index:20;pointer-events:none;
-  box-shadow:0 2px 12px rgba(0,0,0,.5);opacity:0;transition:opacity .3s}
-.bubble.show{opacity:1}
-.bubble::after{content:'';position:absolute;bottom:-6px;left:20px;
-  border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid rgba(0,0,0,.85)}
-
-/* Label */
-.map-label{position:absolute;font-size:9px;color:rgba(255,255,255,.5);z-index:1;pointer-events:none;
-  text-shadow:0 1px 3px rgba(0,0,0,.6)}
-
-/* ===== Right Panel ===== */
-.right{border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:#161b22}
-.panel-title{padding:10px 14px;font-size:12px;font-weight:600;border-bottom:1px solid var(--border);
-  color:var(--muted);letter-spacing:.5px}
-.persona-cards{padding:10px 14px;display:flex;flex-direction:column;gap:8px}
-.p-card{background:#21262d;border-radius:8px;padding:10px 12px;border:1px solid var(--border)}
-.p-card.zhong{border-left:3px solid var(--zhong)}.p-card.zhou{border-left:3px solid var(--zhou)}
-.p-card h3{font-size:12px;margin-bottom:3px;display:flex;align-items:center;gap:6px}
-.p-card .loc{font-size:10px;color:var(--muted);margin-bottom:3px}
-.p-card .act{font-size:11px;line-height:1.5}
-.timeline{flex:1;overflow-y:auto;padding:0 14px 14px}
-.tl-item{display:flex;gap:6px;padding:6px 0;border-bottom:1px solid #21262d}
-.tl-time{font-size:10px;color:var(--accent);font-weight:600;min-width:36px;padding-top:1px}
-.tl-dot{width:7px;height:7px;border-radius:50%;margin-top:3px;flex-shrink:0}
-.tl-dot.z{background:var(--zhong)}.tl-dot.w{background:var(--zhou)}
-.tl-content{font-size:10px;color:var(--muted);line-height:1.4}
-.tl-content .tl-name{font-weight:600;color:var(--text)}
-.empty{display:flex;align-items:center;justify-content:center;height:80px;color:var(--muted);font-size:12px}
+.empty{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;height:100%}
 </style>
 </head>
 <body>
 
-<div class="header">
+<div class="topbar">
   <h1>角色世界模拟器</h1><span class="badge">南一高中</span>
   <div class="time-big" id="timeDisplay">--:--</div>
-</div>
-<div class="controls">
+  <div class="sep"></div>
   <button class="primary" id="btnLoad" onclick="loadData()">加载数据</button>
   <button id="btnPlay" onclick="play()" disabled>▶ 播放</button>
   <button id="btnPause" onclick="pause()" disabled>⏸</button>
@@ -140,108 +109,75 @@ body{font-family:"PingFang SC","Helvetica Neue",sans-serif;background:#1a1d22;co
   <span class="info" id="tickInfo">—</span>
 </div>
 
-<div class="main">
-  <div class="map-wrap">
-    <div class="campus" id="campus"></div>
-  </div>
-  <div class="right">
-    <div class="panel-title">👤 当前状态</div>
-    <div class="persona-cards" id="personaCards"><div class="empty">点击「加载数据」</div></div>
-    <div class="panel-title">📜 活动轨迹</div>
-    <div class="timeline" id="timeline"></div>
+<div class="main-row">
+  <!-- Map -->
+  <div class="map-wrap"><div class="campus" id="campus"></div></div>
+  <!-- Timeline -->
+  <div class="timeline-panel">
+    <div class="tl-header">📜 活动时间轴</div>
+    <div class="tl-scroll" id="tlScroll"><div class="empty">点击「加载数据」</div></div>
   </div>
 </div>
 
 <script>
-// ======= Campus Layout =======
 const BLDS=[
-  {id:"教学楼",cls:"bld-teach",x:60,y:50,w:180,h:110,label:"教学楼",sub:"高二三班 · 音乐教室"},
-  {id:"行政楼",cls:"bld-admin",x:60,y:220,w:140,h:70,label:"行政楼",sub:"学生会 · 办公室"},
-  {id:"图书馆",cls:"bld-lib",x:280,y:50,w:130,h:80,label:"📚 图书馆",sub:"阅读区 · 自习区"},
-  {id:"食堂",cls:"bld-canteen",x:280,y:200,w:130,h:80,label:"🍜 食堂",sub:"一楼 · 二楼窗口"},
-  {id:"咖啡厅",cls:"bld-cafe",x:280,y:340,w:100,h:55,label:"☕ 咖啡厅",sub:"座位区"},
-  {id:"天台",cls:"bld-roof-top",x:450,y:280,w:90,h:50,label:"🌙 天台",sub:"平台"},
-  {id:"小卖部",cls:"bld-shop",x:580,y:280,w:80,h:50,label:"🏪 小卖部",sub:"店内"},
-  {id:"校门口",cls:"bld-gate",x:620,y:440,w:120,h:50,label:"🚪 校门口",sub:""},
+  {id:"教学楼",cls:"bld-teach",x:60,y:50,w:170,h:100,label:"教学楼",sub:"高二三班 · 音乐教室"},
+  {id:"行政楼",cls:"bld-admin",x:60,y:205,w:130,h:65,label:"行政楼",sub:"学生会 · 办公室"},
+  {id:"图书馆",cls:"bld-lib",x:270,y:50,w:120,h:75,label:"📚 图书馆",sub:"阅读区 · 自习区"},
+  {id:"食堂",cls:"bld-canteen",x:270,y:185,w:120,h:75,label:"🍜 食堂",sub:"一楼 · 二楼"},
+  {id:"咖啡厅",cls:"bld-cafe",x:270,y:320,w:95,h:50,label:"☕ 咖啡厅",sub:""},
+  {id:"天台",cls:"bld-roof-top",x:440,y:270,w:85,h:45,label:"🌙 天台",sub:""},
+  {id:"小卖部",cls:"bld-shop",x:570,y:270,w:75,h:45,label:"🏪 小卖部",sub:""},
+  {id:"校门口",cls:"bld-gate",x:610,y:410,w:110,h:45,label:"🚪 校门口",sub:""},
 ];
-// 操场 and 花园 are special
-const FIELD={x:450,y:50,w:240,h:180};
-const GARDEN={x:60,y:370,w:160,h:80};
-
-// Avatar target positions per sector (center of building)
+const FIELD={x:440,y:50,w:230,h:175};
+const GARDEN={x:60,y:340,w:150,h:70};
 const POS={};
 
 function buildCampus(){
   const c=document.getElementById('campus');
-  // Roads
-  [[250,0,12,500],[0,180,820,10],[420,0,10,500],[0,320,440,8],[440,260,240,8]].forEach(([x,y,w,h])=>{
+  [[250,0,10,490],[0,170,820,8],[420,0,8,490],[0,305,440,6],[440,250,230,6]].forEach(([x,y,w,h])=>{
     const r=document.createElement('div');r.className='road';
-    r.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${h}px`;c.appendChild(r);
-  });
-  // Trees
-  [[20,20],[230,30],[230,150],[20,180],[20,310],[420,320],[420,360],[700,50],[750,100],
-   [700,200],[410,420],[500,420],[230,380],[230,430],[150,460],[380,460]].forEach(([x,y])=>{
+    r.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${h}px`;c.appendChild(r)});
+  [[18,18],[230,28],[230,140],[18,170],[18,300],[415,310],[415,360],[690,45],[740,95],
+   [690,185],[410,425],[500,425],[220,360],[220,420],[145,440],[375,440],[540,45],[540,185]].forEach(([x,y])=>{
     const t=document.createElement('div');t.className='tree';
-    t.style.cssText=`left:${x}px;top:${y}px`;c.appendChild(t);
-  });
-  // 操场 (field)
+    t.style.cssText=`left:${x}px;top:${y}px`;c.appendChild(t)});
+
   const f=document.createElement('div');f.className='field';
   f.style.cssText=`left:${FIELD.x}px;top:${FIELD.y}px;width:${FIELD.w}px;height:${FIELD.h}px`;
-  f.innerHTML=`
-    <div class="court" style="left:10px;top:10px;width:100px;height:${FIELD.h-20}px"></div>
-    <div class="court-circle" style="left:45px;top:${(FIELD.h-30)/2}px"></div>
-    <div class="track" style="left:130px;top:15px;width:95px;height:${FIELD.h-30}px"></div>
-    <div style="position:absolute;left:20px;top:${FIELD.h/2-8}px;font-size:10px;color:rgba(255,255,255,.7);font-weight:700">🏀 篮球场</div>
-    <div style="position:absolute;left:145px;top:${FIELD.h/2-8}px;font-size:10px;color:rgba(255,255,255,.6)">🏃 跑道</div>`;
-  c.appendChild(f);
-  POS["操场"]={x:FIELD.x+FIELD.w/2, y:FIELD.y+FIELD.h/2};
+  f.innerHTML=`<div class="court" style="left:10px;top:10px;width:95px;height:${FIELD.h-20}px"></div>
+    <div class="court-circle" style="left:42px;top:${(FIELD.h-28)/2}px"></div>
+    <div class="track" style="left:125px;top:12px;width:90px;height:${FIELD.h-24}px"></div>
+    <div style="position:absolute;left:18px;top:${FIELD.h/2-6}px;font-size:9px;color:rgba(255,255,255,.7);font-weight:700">🏀 篮球场</div>
+    <div style="position:absolute;left:140px;top:${FIELD.h/2-6}px;font-size:9px;color:rgba(255,255,255,.5)">🏃 跑道</div>`;
+  c.appendChild(f);POS["操场"]={x:FIELD.x+FIELD.w/2,y:FIELD.y+FIELD.h/2};
 
-  // 花园
   const g=document.createElement('div');g.className='garden';
   g.style.cssText=`left:${GARDEN.x}px;top:${GARDEN.y}px;width:${GARDEN.w}px;height:${GARDEN.h}px`;
   g.innerHTML=`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:rgba(255,255,255,.8);font-weight:600">🌿 后门小花园</div>`;
-  // Flowers
-  [[20,15,'#e88'],[50,55,'#ee8'],[100,20,'#e8e'],[130,50,'#8ef'],[80,65,'#fe8']].forEach(([x,y,col])=>{
+  [[18,12,'#e88'],[45,50,'#ee8'],[90,15,'#e8e'],[120,45,'#8ef'],[70,58,'#fe8']].forEach(([x,y,col])=>{
     const fl=document.createElement('div');fl.className='flower';
-    fl.style.cssText=`left:${x}px;top:${y}px;background:${col}`;g.appendChild(fl);
-  });
-  c.appendChild(g);
-  POS["后门小花园"]={x:GARDEN.x+GARDEN.w/2, y:GARDEN.y+GARDEN.h/2};
+    fl.style.cssText=`left:${x}px;top:${y}px;background:${col}`;g.appendChild(fl)});
+  c.appendChild(g);POS["后门小花园"]={x:GARDEN.x+GARDEN.w/2,y:GARDEN.y+GARDEN.h/2};
 
-  // Buildings
   BLDS.forEach(b=>{
     const el=document.createElement('div');el.className=`bld ${b.cls}`;el.id='bld-'+b.id;
     el.style.cssText=`left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px`;
     el.innerHTML=`<div class="roof"></div><div class="b-name">${b.label}</div><div class="b-sub">${b.sub}</div>`;
-    c.appendChild(el);
-    POS[b.id]={x:b.x+b.w/2, y:b.y+b.h/2};
-  });
+    c.appendChild(el);POS[b.id]={x:b.x+b.w/2,y:b.y+b.h/2}});
 
-  // Map labels
-  [["南一高中",340,490]].forEach(([t,x,y])=>{
-    const l=document.createElement('div');l.className='map-label';
-    l.style.cssText=`left:${x}px;top:${y}px;font-size:14px;color:rgba(255,255,255,.25);font-weight:700`;
-    l.textContent=t;c.appendChild(l);
-  });
+  const lbl=document.createElement('div');lbl.className='map-label';
+  lbl.style.cssText='left:330px;top:470px';lbl.textContent='南一高中';c.appendChild(lbl);
 
-  // Create avatars
-  ['z','w'].forEach(cls=>{
-    const av=document.createElement('div');
-    av.className=`map-avatar ${cls}`;av.id=`avatar-${cls}`;
-    av.innerHTML=`<span>${cls==='z'?'钟':'周'}</span><div class="pulse"></div>`;
-    av.style.cssText=`left:${POS["校门口"].x-14}px;top:${POS["校门口"].y-14}px`;
-    c.appendChild(av);
-  });
-  // Bubbles
-  ['z','w'].forEach(cls=>{
-    const bb=document.createElement('div');
-    bb.className='bubble';bb.id=`bubble-${cls}`;
-    c.appendChild(bb);
-  });
+  [{cls:'z',name:'钟辰时',offset:-20},{cls:'w',name:'周往',offset:20}].forEach(a=>{
+    const wrap=document.createElement('div');wrap.className='map-avatar';wrap.id=`avatar-${a.cls}`;
+    wrap.innerHTML=`<div class="av-dot ${a.cls}"><span>${a.name[0]}</span><div class="pulse"></div></div><div class="av-label">${a.name}</div>`;
+    wrap.style.cssText=`left:${POS["校门口"].x+a.offset-14}px;top:${POS["校门口"].y-22}px`;
+    wrap.dataset.offset=a.offset;c.appendChild(wrap)});
 }
 buildCampus();
 
-// ======= Data & Playback =======
 let data=[],ticks={},tickNums=[],currentIdx=-1,timer=null,speed=1200;
 function setSpeed(v){speed=parseInt(v)}
 
@@ -250,8 +186,7 @@ async function loadData(){
     const inp=document.createElement('input');inp.type='file';inp.accept='.json';
     inp.onchange=ev=>{const rd=new FileReader();rd.onload=e2=>{data=JSON.parse(e2.target.result);processData()};rd.readAsText(ev.target.files[0])};
     inp.click();return}
-  processData();
-}
+  processData()}
 
 function processData(){
   ticks={};data.forEach(d=>{if(!ticks[d.tick])ticks[d.tick]=[];ticks[d.tick].push(d)});
@@ -259,68 +194,79 @@ function processData(){
   ['btnPlay','btnNext','btnPrev'].forEach(id=>document.getElementById(id).disabled=false);
   document.getElementById('btnLoad').textContent='✓ 已加载';
   document.getElementById('tickInfo').textContent=`共 ${tickNums.length} 步`;
-  step(1);
-}
+  buildTimeline();step(1)}
 
-function cleanAction(raw){
+function clean(raw){
   if(!raw)return'idle';
   let s=raw.replace(/\(fallback\)\s*/,'');
   s=s.replace(/\[\(ID:\w+\)\s*[^\]]*?\]\s*Activity:\s*/g,'');
   s=s.replace(/\n\[\(ID:xxxxxx\)[^\]]*?\]\s*Activity:[^\n]*/g,'');
-  if(s.length>120)s=s.slice(0,120)+'…';
-  return s||'idle';
-}
+  s=s.replace(/\s*\([^)]{0,200}\)\s*$/,'');
+  return s||'idle'}
 
-function moveAvatar(cls, sector, action){
+function buildTimeline(){
+  const container=document.getElementById('tlScroll');
+  let html='';
+  tickNums.forEach((tn,idx)=>{
+    const entries=ticks[tn]||[];
+    const time=entries[0]?.time||'--:--';
+    html+=`<div class="tl-tick" id="tl-tick-${tn}">`;
+    html+=`<div class="tl-tick-time" id="tl-time-${tn}">${time}</div>`;
+    entries.forEach(e=>{
+      const isZ=e.persona==='钟辰时';
+      const action=clean(e.action);
+      const isConvo=action.startsWith('conversing')||action.includes('对话')||action.includes('问候');
+      const sector=e.sector||'校外';
+      const arena=e.arena||'';
+      html+=`<div class="tl-entry">
+        <div class="tl-avatar ${isZ?'z':'w'}">${isZ?'钟':'周'}</div>
+        <div class="tl-body">
+          <div class="tl-name-row">
+            <span class="tl-persona">${e.persona}</span>
+            <span class="tl-loc">📍 ${sector}${arena?' · '+arena:''}</span>
+          </div>
+          <div class="tl-action ${isConvo?'convo':''}">${action.length>100?action.slice(0,100)+'…':action}</div>
+        </div>
+      </div>`;
+    });
+    html+=`</div>`;
+  });
+  container.innerHTML=html}
+
+function moveAvatar(cls,sector){
   const pos=POS[sector]||POS["校门口"];
   const av=document.getElementById(`avatar-${cls}`);
-  const offset=cls==='z'?-18:18;
-  av.style.left=(pos.x+offset-14)+'px';
-  av.style.top=(pos.y-14)+'px';
-  // Bubble
-  const bb=document.getElementById(`bubble-${cls}`);
-  const short=cleanAction(action);
-  if(short&&short!=='idle'){
-    bb.textContent=(cls==='z'?'钟辰时':'周往')+': '+short.slice(0,60);
-    bb.style.left=(pos.x+offset-20)+'px';
-    bb.style.top=(pos.y-54)+'px';
-    bb.classList.add('show');
-  }else{bb.classList.remove('show')}
-  // Highlight building
-  BLDS.forEach(b=>{document.getElementById('bld-'+b.id).classList.toggle('active',b.id===sector)});
-}
+  const offset=parseInt(av.dataset.offset)||0;
+  av.style.left=(pos.x+offset-14)+'px';av.style.top=(pos.y-22)+'px';
+  BLDS.forEach(b=>{const el=document.getElementById('bld-'+b.id);
+    if(b.id===sector)el.classList.add('active');else el.classList.remove('active')})}
 
 function renderTick(tickNum){
   const entries=ticks[tickNum]||[];
   document.getElementById('timeDisplay').textContent=entries[0]?.time||'--:--';
   document.getElementById('tickInfo').textContent=`第 ${currentIdx+1} / ${tickNums.length} 步`;
+  entries.forEach(e=>{moveAvatar(e.persona==='钟辰时'?'z':'w',e.sector||'校门口')});
 
-  let cardsHtml='';
-  entries.forEach(e=>{
-    const isZ=e.persona==='钟辰时';
-    const cls=isZ?'zhong':'zhou';
-    const action=cleanAction(e.action);
-    moveAvatar(isZ?'z':'w', e.sector||'校门口', e.action);
-    cardsHtml+=`<div class="p-card ${cls}">
-      <h3>${e.emoji||'👤'} ${e.persona}</h3>
-      <div class="loc">📍 ${e.sector||'校外'}${e.arena?' · '+e.arena:''}</div>
-      <div class="act">${action}</div></div>`;
+  // Highlight current tick in timeline, dim others
+  tickNums.forEach(tn=>{
+    const timeEl=document.getElementById(`tl-time-${tn}`);
+    const tickEl=document.getElementById(`tl-tick-${tn}`);
+    if(!timeEl||!tickEl)return;
+    if(tn===tickNum){
+      timeEl.classList.add('current');
+      tickEl.style.opacity='1';
+    }else if(tn>tickNum){
+      timeEl.classList.remove('current');
+      tickEl.style.opacity='.25';
+    }else{
+      timeEl.classList.remove('current');
+      tickEl.style.opacity='.6';
+    }
   });
-  document.getElementById('personaCards').innerHTML=cardsHtml||'<div class="empty">无数据</div>';
 
-  let tlHtml='';
-  for(let i=currentIdx;i>=Math.max(0,currentIdx-20);i--){
-    (ticks[tickNums[i]]||[]).forEach(e=>{
-      const isZ=e.persona==='钟辰时';
-      const act=cleanAction(e.action);
-      const short=act.length>50?act.slice(0,50)+'…':act;
-      tlHtml+=`<div class="tl-item"><div class="tl-time">${e.time}</div>
-        <div class="tl-dot ${isZ?'z':'w'}"></div>
-        <div class="tl-content"><span class="tl-name">${e.persona}</span> ${e.emoji||''} ${short}</div></div>`;
-    });
-  }
-  document.getElementById('timeline').innerHTML=tlHtml;
-}
+  // Scroll to current tick
+  const el=document.getElementById(`tl-tick-${tickNum}`);
+  if(el)el.scrollIntoView({behavior:'smooth',block:'center'})}
 
 function step(dir){const n=currentIdx+dir;if(n<0||n>=tickNums.length)return;currentIdx=n;renderTick(tickNums[currentIdx])}
 function play(){document.getElementById('btnPlay').disabled=true;document.getElementById('btnPause').disabled=false;
