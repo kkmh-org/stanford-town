@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NPC Agent 系统拓扑图</title>
+<title>Livo Agent 系统拓扑图</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -111,7 +111,7 @@
 </head>
 <body>
 
-<h1>NPC Agent 系统拓扑图</h1>
+<h1>Livo Agent 系统拓扑图</h1>
 <p class="subtitle">4 Agent · 1 时钟 · 1 用户 · 12 条数据流 · 更新于 2026-04-15 对齐会后</p>
 
 <div class="topo">
@@ -125,7 +125,7 @@
     <marker id="a-yellow" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#cfcf5a"/></marker>
   </defs>
 
-  <!-- ══════ 1. 时钟 → 天道 ══════ -->
+  <!-- ══════ 1. 时钟 → X Agent ══════ -->
   <path d="M 340 60 L 200 60 L 200 118"
         stroke="#555" stroke-width="1.5" stroke-dasharray="5,4" fill="none" marker-end="url(#a-gray)"/>
   <text x="270" y="54" class="fl" fill="#778" text-anchor="middle">tick</text>
@@ -135,7 +135,7 @@
         stroke="#555" stroke-width="1.5" stroke-dasharray="5,4" fill="none" marker-end="url(#a-gray)"/>
   <text x="410" y="280" class="fl" fill="#778">tick</text>
 
-  <!-- ══════ 3. 天道 → 编剧 (atmosphere 虚态) ══════ -->
+  <!-- ══════ 3. X Agent → 编剧 (atmosphere 虚态) ══════ -->
   <path d="M 242 170 L 538 170"
         stroke="#7b50cf" stroke-width="2.5" fill="none" marker-end="url(#a-purple)"/>
   <text x="395" y="160" class="fl" fill="#b88aef" text-anchor="middle" font-size="11">atmosphere (虚态氛围信号)</text>
@@ -197,7 +197,7 @@
 </div>
 
 <div class="n" id="tiandao">
-  <h3>🌌 天道 Agent <span class="badge">世界氛围发生器</span></h3>
+  <h3>🌌 X Agent <span class="badge">世界氛围发生器</span></h3>
   <div class="sec"><div class="lbl">in</div>
     <div class="it">tick, current_time</div>
   </div>
@@ -209,7 +209,7 @@
 <div class="n" id="screen">
   <h3>🎬 编剧 Agent <span class="badge">事件执行中枢</span></h3>
   <div class="sec"><div class="lbl">in</div>
-    <div class="it">天道.atmosphere</div>
+    <div class="it">X Agent.atmosphere</div>
     <div class="it">world_state</div>
     <div class="it">character_states[]</div>
     <div class="it">user_behavior</div>
@@ -275,9 +275,9 @@
   <div class="tg">
     <table>
       <tr><th>#</th><th style="width:100px">从</th><th style="width:100px">到</th><th style="width:200px">数据</th><th>说明</th></tr>
-      <tr><td>1</td><td>时钟</td><td>天道</td><td><code>tick</code> <code>current_time</code></td><td>驱动天道演进</td></tr>
+      <tr><td>1</td><td>时钟</td><td>X Agent</td><td><code>tick</code> <code>current_time</code></td><td>驱动X Agent演进</td></tr>
       <tr><td>2</td><td>时钟</td><td>世界模拟</td><td><code>tick</code> <code>current_time</code></td><td>驱动机械更新（课表、作息）</td></tr>
-      <tr><td>3</td><td>天道</td><td>编剧</td><td><code>atmosphere</code></td><td>虚态氛围信号（运势/情绪/趋势）</td></tr>
+      <tr><td>3</td><td>X Agent</td><td>编剧</td><td><code>atmosphere</code></td><td>虚态氛围信号（运势/情绪/趋势）</td></tr>
       <tr><td>4</td><td>编剧</td><td>世界模拟</td><td><code>common_events[]</code> <code>persona_events[]</code></td><td>所有实态事件统一由编剧产出</td></tr>
       <tr class="hl"><td>5</td><td>编剧</td><td>角色</td><td><code>plot_directive</code></td><td>剧情指令 + 角色日程安排</td></tr>
       <tr><td>6</td><td>世界模拟</td><td>编剧</td><td><code>world_state</code></td><td>当前物品状态，编剧决策依据</td></tr>
