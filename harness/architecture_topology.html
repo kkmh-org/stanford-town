@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NPC Agent 系统拓扑图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0e1a;
+    color: #e0e0e0;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  h1 {
+    text-align: center;
+    padding: 36px 0 6px;
+    font-size: 26px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 2px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #556;
+    margin-bottom: 48px;
+  }
+
+  .topo {
+    width: 800px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .topo svg { display: block; width: 100%; }
+
+  .n {
+    position: absolute;
+    z-index: 1;
+    border-radius: 14px;
+    padding: 14px 18px;
+    box-shadow: 0 2px 20px rgba(0,0,0,.45);
+  }
+  .n h3 { font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .n .badge { font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 400; opacity: .85; }
+  .n .sec { margin-top: 5px; }
+  .n .lbl { font-size: 9px; font-weight: 700; letter-spacing: 1px; opacity: .5; text-transform: uppercase; margin-bottom: 1px; }
+  .n .it { font-size: 11px; line-height: 1.6; padding-left: 10px; position: relative; }
+  .n .it::before { content:''; position: absolute; left:0; top:7px; width:4px; height:4px; border-radius:50%; }
+
+  #clock {
+    top: 10px; left: 320px; width: 150px; text-align: center;
+    background: linear-gradient(135deg,#181828,#1e2540); border: 1px solid #2a2e45;
+  }
+  #clock h3 { justify-content: center; color: #99a; }
+  #clock .it::before { background: #667; }
+
+  #tiandao {
+    top: 120px; left: 20px; width: 220px;
+    background: linear-gradient(135deg,#1a0c30,#261556); border: 1px solid #4e35a0;
+  }
+  #tiandao h3 { color: #c9a0ff; }
+  #tiandao .badge { background: #4e35a022; color: #c9a0ff; border: 1px solid #4e35a066; }
+  #tiandao .it::before { background: #9b6fdf; }
+
+  #screen {
+    top: 120px; left: 540px; width: 240px;
+    background: linear-gradient(135deg,#0c1e30,#153660); border: 1px solid #3570a0;
+  }
+  #screen h3 { color: #7ec0e8; }
+  #screen .badge { background: #3570a022; color: #7ec0e8; border: 1px solid #3570a066; }
+  #screen .it::before { background: #5aa0d0; }
+
+  #world {
+    top: 420px; left: 230px; width: 320px;
+    background: linear-gradient(135deg,#0c2a18,#18553a); border: 1px solid #3a9e5b;
+  }
+  #world h3 { color: #7ee0a0; }
+  #world .badge { background: #3a9e5b22; color: #7ee0a0; border: 1px solid #3a9e5b66; }
+  #world .it::before { background: #5acf7a; }
+
+  #charA {
+    top: 710px; left: 230px; width: 210px;
+    background: linear-gradient(135deg,#2a1a08,#553a18); border: 1px solid #9e7a3a;
+  }
+  #charA h3 { color: #e0c07e; }
+  #charA .badge { background: #9e7a3a22; color: #e0c07e; border: 1px solid #9e7a3a66; }
+  #charA .it::before { background: #cfaa5a; }
+
+  #user {
+    top: 710px; left: 560px; width: 150px;
+    background: linear-gradient(135deg,#2a2a08,#555518); border: 1px solid #9e9e3a;
+  }
+  #user h3 { color: #e0e07e; justify-content: center; }
+  #user .it::before { background: #cfcf5a; }
+
+  .fl { font-size: 10px; }
+
+  .tables { width: 800px; margin: 48px auto 60px; }
+  .tables h2 { font-size: 20px; color: #fff; margin-bottom: 20px; }
+  .tg { background: #111827; border-radius: 12px; border: 1px solid #1e2030; overflow: hidden; }
+  .tg table { width: 100%; border-collapse: collapse; }
+  .tg th { text-align: left; padding: 8px 18px; font-size: 11px; color: #556; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #161a28; }
+  .tg td { padding: 7px 18px; font-size: 12px; border-bottom: 1px solid #161a28; color: #aab; }
+  .tg tr:last-child td { border-bottom: none; }
+  .tg td:first-child { font-weight: 600; width: 40px; }
+  .tg code { background: #161a28; padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #9bd; }
+  .tg .hl { background: #5aa0d010; }
+  .tg .hl td { color: #7ec0e8; }
+  .tg .del { opacity: 0.35; text-decoration: line-through; }
+</style>
+</head>
+<body>
+
+<h1>NPC Agent 系统拓扑图</h1>
+<p class="subtitle">4 Agent · 1 时钟 · 1 用户 · 12 条数据流 · 更新于 2026-04-15 对齐会后</p>
+
+<div class="topo">
+<svg viewBox="0 0 800 960" style="height:960px">
+  <defs>
+    <marker id="a-gray"   markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#667"/></marker>
+    <marker id="a-purple" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#9b6fdf"/></marker>
+    <marker id="a-blue"   markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#5aa0d0"/></marker>
+    <marker id="a-green"  markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#5acf7a"/></marker>
+    <marker id="a-orange" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#cfaa5a"/></marker>
+    <marker id="a-yellow" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#cfcf5a"/></marker>
+  </defs>
+
+  <!-- ══════ 1. 时钟 → 天道 ══════ -->
+  <path d="M 340 60 L 200 60 L 200 118"
+        stroke="#555" stroke-width="1.5" stroke-dasharray="5,4" fill="none" marker-end="url(#a-gray)"/>
+  <text x="270" y="54" class="fl" fill="#778" text-anchor="middle">tick</text>
+
+  <!-- ══════ 2. 时钟 → 世界模拟 ══════ -->
+  <path d="M 400 60 L 400 418"
+        stroke="#555" stroke-width="1.5" stroke-dasharray="5,4" fill="none" marker-end="url(#a-gray)"/>
+  <text x="410" y="280" class="fl" fill="#778">tick</text>
+
+  <!-- ══════ 3. 天道 → 编剧 (atmosphere 虚态) ══════ -->
+  <path d="M 242 170 L 538 170"
+        stroke="#7b50cf" stroke-width="2.5" fill="none" marker-end="url(#a-purple)"/>
+  <text x="395" y="160" class="fl" fill="#b88aef" text-anchor="middle" font-size="11">atmosphere (虚态氛围信号)</text>
+
+  <!-- ══════ 4. 编剧 → 世界模拟 (实态 events) ══════ -->
+  <path d="M 660 390 L 660 470 L 552 470"
+        stroke="#5aa0d0" stroke-width="2.5" fill="none" marker-end="url(#a-blue)"/>
+  <text x="668" y="425" class="fl" fill="#7ec0e8" font-size="9">common_events (实态)</text>
+  <text x="668" y="438" class="fl" fill="#7ec0e8" font-size="9">persona_events (实态)</text>
+
+  <!-- ══════ 5. 编剧 → 角色 (plot_directive) ══════ -->
+  <path d="M 660 400 L 700 500 L 700 680 L 442 708"
+        stroke="#5aa0d0" stroke-width="2.5" fill="none" marker-end="url(#a-blue)"/>
+  <text x="710" y="595" class="fl" fill="#7ec0e8" font-size="11">plot_directive</text>
+  <text x="710" y="609" class="fl" fill="#7ec0e8" font-size="9">(剧情指令 + 日程)</text>
+
+  <!-- ══════ 6. 世界模拟 → 编剧 (world_state) ══════ -->
+  <path d="M 540 440 L 600 440 L 600 390"
+        stroke="#4ab868" stroke-width="1.5" fill="none" stroke-dasharray="6,4" marker-end="url(#a-green)"/>
+  <text x="575" y="414" class="fl" fill="#7ee0a0" font-size="9" text-anchor="end">world_state</text>
+
+  <!-- ══════ 7. 世界模拟 → 角色 (event_info) ══════ -->
+  <path d="M 360 640 L 360 708"
+        stroke="#4ab868" stroke-width="2.5" fill="none" marker-end="url(#a-green)"/>
+  <text x="370" y="680" class="fl" fill="#7ee0a0" font-size="10">event_info</text>
+
+  <!-- ══════ 8. 角色 → 世界模拟 (action_results) ══════ -->
+  <path d="M 228 760 L 180 760 L 180 540 L 228 540"
+        stroke="#cfaa5a" stroke-width="1.3" fill="none" stroke-dasharray="5,4" marker-end="url(#a-orange)"/>
+  <text x="140" y="650" class="fl" fill="#e0c07e" font-size="9" transform="rotate(-90,140,650)">action_results</text>
+
+  <!-- ══════ 9. 角色 → 编剧 (character_state) ══════ -->
+  <path d="M 442 740 L 740 740 L 740 390"
+        stroke="#cfaa5a44" stroke-width="1" fill="none" stroke-dasharray="3,5" marker-end="url(#a-orange)"/>
+  <text x="748" y="570" class="fl" fill="#e0c07e55" font-size="9">character_state</text>
+
+  <!-- ══════ 10. 用户 → 世界模拟 (user_input) ══════ -->
+  <path d="M 635 710 L 635 560 L 552 560"
+        stroke="#cfcf5a" stroke-width="1.5" fill="none" marker-end="url(#a-yellow)"/>
+  <text x="643" y="640" class="fl" fill="#e0e07e" font-size="9">user_input</text>
+
+  <!-- ══════ 11. 用户 → 角色 (user_message) ══════ -->
+  <path d="M 558 760 L 442 760"
+        stroke="#cfcf5a" stroke-width="1.5" fill="none" marker-end="url(#a-yellow)"/>
+  <text x="500" y="753" class="fl" fill="#e0e07e" font-size="9" text-anchor="middle">user_message</text>
+
+  <!-- ══════ 12. 角色 → 用户 (reply) ══════ -->
+  <path d="M 442 790 L 558 790"
+        stroke="#cfaa5a55" stroke-width="1" fill="none" stroke-dasharray="3,5" marker-end="url(#a-orange)"/>
+  <text x="500" y="805" class="fl" fill="#e0c07e55" font-size="9" text-anchor="middle">reply</text>
+</svg>
+
+<!-- node cards -->
+<div class="n" id="clock">
+  <h3>⏱ 时钟</h3>
+  <div class="sec"><div class="lbl">out</div>
+    <div class="it">tick, current_time</div>
+  </div>
+</div>
+
+<div class="n" id="tiandao">
+  <h3>🌌 天道 Agent <span class="badge">世界氛围发生器</span></h3>
+  <div class="sec"><div class="lbl">in</div>
+    <div class="it">tick, current_time</div>
+  </div>
+  <div class="sec"><div class="lbl">out</div>
+    <div class="it">atmosphere (虚态氛围信号) → 编剧</div>
+  </div>
+</div>
+
+<div class="n" id="screen">
+  <h3>🎬 编剧 Agent <span class="badge">事件执行中枢</span></h3>
+  <div class="sec"><div class="lbl">in</div>
+    <div class="it">天道.atmosphere</div>
+    <div class="it">world_state</div>
+    <div class="it">character_states[]</div>
+    <div class="it">user_behavior</div>
+    <div class="it">plot_progress, story_config</div>
+  </div>
+  <div class="sec"><div class="lbl">out</div>
+    <div class="it">common_events (实态) → 世界模拟</div>
+    <div class="it">persona_events (实态) → 世界模拟</div>
+    <div class="it" style="color:#7ec0e8;font-weight:600">plot_directive → 角色</div>
+  </div>
+</div>
+
+<div class="n" id="world">
+  <h3>🌍 世界模拟 Agent <span class="badge">物理引擎</span></h3>
+  <div class="sec"><div class="lbl">in</div>
+    <div class="it">编剧.common_events[] + persona_events[]</div>
+    <div class="it">tick + current_time (机械更新)</div>
+    <div class="it">角色.action_results[]</div>
+    <div class="it">用户.user_input</div>
+  </div>
+  <div class="sec"><div class="lbl">internal</div>
+    <div class="it">全量物品状态树 (item 绑定发布)</div>
+  </div>
+  <div class="sec"><div class="lbl">out</div>
+    <div class="it">world_state → 编剧</div>
+    <div class="it">event_info[] → 角色 (按 item tree)</div>
+  </div>
+</div>
+
+<div class="n" id="charA">
+  <h3>👤 钟辰时 <span class="badge">角色 Agent</span></h3>
+  <div class="sec"><div class="lbl">in</div>
+    <div class="it">event_info[] ← 世界</div>
+    <div class="it" style="color:#7ec0e8">plot_directive ← 编剧</div>
+    <div class="it">user_message ← 用户</div>
+  </div>
+  <div class="sec"><div class="lbl">internal</div>
+    <div class="it">Deep Feeling (Short/Brief/Deep)</div>
+    <div class="it">Memory · VAD · Item Tree · Skills</div>
+  </div>
+  <div class="sec"><div class="lbl">out</div>
+    <div class="it">action_results → 世界</div>
+    <div class="it">character_state → 编剧</div>
+    <div class="it">reply → 用户</div>
+  </div>
+</div>
+
+<div class="n" id="user">
+  <h3>🧑 用户</h3>
+  <div class="sec"><div class="lbl">out</div>
+    <div class="it">user_input → 世界</div>
+    <div class="it">user_message → 角色</div>
+  </div>
+  <div class="sec"><div class="lbl">in</div>
+    <div class="it">reply ← 角色</div>
+  </div>
+</div>
+
+</div>
+
+<div class="tables">
+  <h2>数据流清单</h2>
+  <div class="tg">
+    <table>
+      <tr><th>#</th><th style="width:100px">从</th><th style="width:100px">到</th><th style="width:200px">数据</th><th>说明</th></tr>
+      <tr><td>1</td><td>时钟</td><td>天道</td><td><code>tick</code> <code>current_time</code></td><td>驱动天道演进</td></tr>
+      <tr><td>2</td><td>时钟</td><td>世界模拟</td><td><code>tick</code> <code>current_time</code></td><td>驱动机械更新（课表、作息）</td></tr>
+      <tr><td>3</td><td>天道</td><td>编剧</td><td><code>atmosphere</code></td><td>虚态氛围信号（运势/情绪/趋势）</td></tr>
+      <tr><td>4</td><td>编剧</td><td>世界模拟</td><td><code>common_events[]</code> <code>persona_events[]</code></td><td>所有实态事件统一由编剧产出</td></tr>
+      <tr class="hl"><td>5</td><td>编剧</td><td>角色</td><td><code>plot_directive</code></td><td>剧情指令 + 角色日程安排</td></tr>
+      <tr><td>6</td><td>世界模拟</td><td>编剧</td><td><code>world_state</code></td><td>当前物品状态，编剧决策依据</td></tr>
+      <tr><td>7</td><td>世界模拟</td><td>角色</td><td><code>event_info[]</code></td><td>按角色 item tree 过滤，item 绑定发布</td></tr>
+      <tr><td>8</td><td>角色</td><td>世界模拟</td><td><code>action_results[]</code></td><td>行为导致的物品状态变更</td></tr>
+      <tr><td>9</td><td>角色</td><td>编剧</td><td><code>character_state</code></td><td>情感/关系/位置/成长</td></tr>
+      <tr><td>10</td><td>用户</td><td>世界模拟</td><td><code>user_input</code></td><td>用户直接操作世界</td></tr>
+      <tr><td>11</td><td>用户</td><td>角色</td><td><code>user_message</code></td><td>用户跟角色聊天</td></tr>
+      <tr><td>12</td><td>角色</td><td>用户</td><td><code>reply</code></td><td>角色回复用户</td></tr>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>
