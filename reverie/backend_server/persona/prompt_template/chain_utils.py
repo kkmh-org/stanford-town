@@ -964,10 +964,15 @@ def run_gpt_prompt_action_sector_v2(action_description, persona, maze,
 
     living_sector = persona.scratch.living_area.split(":")[1] if ":" in persona.scratch.living_area else ""
 
+    _refusal_kw_s = ["无法", "解答", "抱歉", "矛盾", "题目", "需要指出",
+                     "不完整", "补充", "请", "哦", "呢", "~"]
+
     def _validate_sector(val, p=""):
         if not val.strip() or "," in val:
             return False
-        if any(kw in val for kw in ["无法", "解答", "抱歉", "矛盾", "题目", "需要指出"]):
+        if any(kw in val for kw in _refusal_kw_s):
+            return False
+        if len(val) > 15:
             return False
         return True
 
@@ -1018,18 +1023,25 @@ def run_gpt_prompt_action_arena_v2(action_description, persona, maze,
     prompt = generate_prompt(prompt_input, "persona/prompt_template/v1/action_location_object_vMar11.txt")
 
     def clean_up(raw, p=""):
-        return raw.split("}")[0].strip().strip("{").strip()
+        return raw.split("}")[0].strip().strip("{").strip().split("\n")[0].strip()
+
+    _refusal_kw = ["无法", "解答", "抱歉", "矛盾", "题目", "需要指出",
+                   "不完整", "补充", "请", "哦", "呢", "嘻", "~"]
 
     def validate(val, p=""):
         if not val.strip() or "," in val:
             return False
-        if any(kw in val for kw in ["无法", "解答", "抱歉", "矛盾", "题目", "需要指出"]):
+        if any(kw in val for kw in _refusal_kw):
+            return False
+        if len(val) > 20:
             return False
         return True
 
     arena_fail_safe = fin[0] if fin else "classroom"
     output = run_prompt_str(prompt, clean_up, validate,
                             fail_safe=arena_fail_safe, repeat=5, verbose=verbose)
+    if output not in fin:
+        output = arena_fail_safe
     return output, [output, prompt, None, prompt_input, None]
 
 
@@ -1045,15 +1057,18 @@ def run_gpt_prompt_action_game_object_v2(action_description, persona, maze,
     def clean_up(raw, p=""):
         return raw.strip().split("\n")[0].strip()
 
+    _obj_refusal = ["无法", "解答", "抱歉", "不完整", "补充", "请", "哦", "~"]
     def validate(val, p=""):
-        if not val or "无法" in val or "解答" in val or "抱歉" in val:
+        if not val or len(val) > 20:
+            return False
+        if any(kw in val for kw in _obj_refusal):
             return False
         return True
 
     x = [i.strip() for i in objects_str.split(",")]
     obj_fail_safe = x[0] if x else "desk"
     output = run_prompt_str(prompt, clean_up, validate,
-                            fail_safe=obj_fail_safe, repeat=5, verbose=verbose)
+                            fail_safe=obj_fail_safe, repeat=3, verbose=verbose)
 
     if output not in x:
         output = _random.choice(x)

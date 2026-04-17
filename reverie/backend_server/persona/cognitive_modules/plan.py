@@ -639,22 +639,32 @@ def _determine_action(persona, maze):
     act_obj_pron = "💤"
     act_obj_event = ("", None, None)
   else:
-    # Finding the target location of the action and creating action-related
-    # variables.
-    act_world = maze.access_tile(persona.scratch.curr_tile)["world"]
-    act_sector = generate_action_sector(act_desp, persona, maze)
-    act_arena = generate_action_arena(act_desp, persona, maze, act_world, act_sector)
-    act_address = f"{act_world}:{act_sector}:{act_arena}"
-    act_game_object = generate_action_game_object(act_desp, act_address,
-                                                  persona, maze)
-    new_address = f"{act_world}:{act_sector}:{act_arena}:{act_game_object}"
-    act_pron = generate_action_pronunciatio(act_desp, persona)
-    act_event = generate_action_event_triple(act_desp, persona)
-    # Persona's actions also influence the object states.
-    act_obj_desp = generate_act_obj_desc(act_game_object, act_desp, persona)
-    act_obj_pron = generate_action_pronunciatio(act_obj_desp, persona)
-    act_obj_event = generate_act_obj_event_triple(act_game_object, 
-                                                  act_obj_desp, persona)
+    try:
+      act_world = maze.access_tile(persona.scratch.curr_tile)["world"]
+      act_sector = generate_action_sector(act_desp, persona, maze)
+      act_arena = generate_action_arena(act_desp, persona, maze, act_world, act_sector)
+      act_address = f"{act_world}:{act_sector}:{act_arena}"
+      act_game_object = generate_action_game_object(act_desp, act_address,
+                                                    persona, maze)
+      new_address = f"{act_world}:{act_sector}:{act_arena}:{act_game_object}"
+      act_pron = generate_action_pronunciatio(act_desp, persona)
+      act_event = generate_action_event_triple(act_desp, persona)
+      act_obj_desp = generate_act_obj_desc(act_game_object, act_desp, persona)
+      act_obj_pron = generate_action_pronunciatio(act_obj_desp, persona)
+      act_obj_event = generate_act_obj_event_triple(act_game_object, 
+                                                    act_obj_desp, persona)
+    except Exception as e:
+      print(f"[LBS] _determine_action location failed for {persona.scratch.name}: {e}, using living_area fallback")
+      la_parts = persona.scratch.living_area.split(":")
+      act_world = la_parts[0] if len(la_parts) > 0 else ""
+      act_sector = la_parts[1] if len(la_parts) > 1 else ""
+      act_arena = la_parts[2] if len(la_parts) > 2 else ""
+      new_address = persona.scratch.living_area + ":<random>"
+      act_pron = "🙂"
+      act_event = (persona.scratch.name, "is", act_desp[:30])
+      act_obj_desp = "idle"
+      act_obj_pron = "🙂"
+      act_obj_event = ("", None, None)
 
   # Adding the action to persona's queue. 
   persona.scratch.add_new_action(new_address, 
