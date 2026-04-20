@@ -22,17 +22,36 @@ except ModuleNotFoundError:
   debug = True
 
 from llm_config import (LITELLM_BASE_URL, LITELLM_API_KEY,
-                         LLM_MODEL, EMBEDDING_MODEL)
+                         LLM_MODEL, EMBEDDING_MODEL,
+                         LANGFUSE_SECRET_KEY, LANGFUSE_PUBLIC_KEY,
+                         LANGFUSE_HOST)
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 # ---------------------------------------------------------------------------
+# Langfuse observability — auto-traces every LLM call
+# ---------------------------------------------------------------------------
+_langfuse_handler = None
+try:
+  from langfuse.langchain import CallbackHandler
+  _langfuse_handler = CallbackHandler(
+      secret_key=LANGFUSE_SECRET_KEY,
+      public_key=LANGFUSE_PUBLIC_KEY,
+      host=LANGFUSE_HOST,
+  )
+except ImportError:
+  pass
+
+# ---------------------------------------------------------------------------
 # Shared LLM and Embedding instances, pointed at the LiteLLM gateway.
 # ---------------------------------------------------------------------------
+_llm_callbacks = [_langfuse_handler] if _langfuse_handler else []
+
 _llm = ChatOpenAI(
     base_url=LITELLM_BASE_URL,
     api_key=LITELLM_API_KEY,
     model=LLM_MODEL,
+    callbacks=_llm_callbacks,
 )
 
 _embeddings = OpenAIEmbeddings(
