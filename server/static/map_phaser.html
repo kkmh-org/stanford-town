@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>Phaser Map — 南一高中</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#6db44a;overflow:hidden;height:100vh;font-family:"PingFang SC",sans-serif}
+#game{width:100%;height:100vh}
+.info{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.75);color:#fff;
+  padding:8px 14px;border-radius:6px;font-size:12px;z-index:100;pointer-events:none}
+.controls{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.75);color:#fff;
+  padding:8px 14px;border-radius:6px;font-size:11px;z-index:100}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div class="info" id="info">南一高中 · 红瓦白墙 · 仿淡江风格</div>
+<div class="controls">🖱️ 左键拖动平移 · 滚轮缩放 · ⌨️ 方向键移动视角</div>
+
+<script>
+// ============ Map config (淡江中学 风格：红瓦白墙、树丛、院落) ============
+const TILE = 48;
+const MAP_W = 34;
+const MAP_H = 24;
+
+// Buildings — arranged like 淡江中学 campus layout
+// Mix of red-brick classic style + white-wall dormitories
+const BLDS = [
+  // Front row (north) — 淡江风格的标志性红瓦建筑
+  {name:"教学楼",     x:3,  y:3,  w:8, h:5, wall:0xf0e8d0, roof:0xa0433a, accent:0x8a2a22, label:"🏫 教学楼", style:"classic"},
+  {name:"图书馆",     x:13, y:3,  w:6, h:5, wall:0xe8dcc0, roof:0xa0433a, accent:0x8a2a22, label:"📚 图书馆", style:"classic"},
+  {name:"食堂",       x:13, y:10, w:6, h:4, wall:0xf0e0c0, roof:0x7a6a50, accent:0x5a4a30, label:"🍜 食堂", style:"modern"},
+  {name:"行政楼",     x:3,  y:10, w:8, h:4, wall:0xe8e0d0, roof:0x8a3a30, accent:0x6a2a20, label:"🏢 行政楼", style:"classic"},
+  {name:"咖啡厅",     x:13, y:16, w:4, h:3, wall:0xf5e8d0, roof:0x9a5a30, accent:0x7a4020, label:"☕ 咖啡厅", style:"modern"},
+  {name:"天台",       x:20, y:13, w:4, h:2, wall:0xe0e0e0, roof:0x808080, accent:0x606060, label:"🌙 天台", style:"modern"},
+  {name:"小卖部",     x:25, y:13, w:3, h:2, wall:0xf0e0c0, roof:0x9a7a50, accent:0x7a5a30, label:"🏪 小卖部", style:"modern"},
+  {name:"校门口",     x:27, y:19, w:5, h:3, wall:0xe0e0e0, roof:0x505050, accent:0x303030, label:"🚪 校门口", style:"gate"},
+];
+const FIELD = {name:"操场", x:20, y:3, w:12, h:9};
+const GARDEN = {name:"后门小花园", x:3, y:16, w:7, h:5};
+
+const COLORS = {'钟辰时':0x4a90d9, '周往':0xe8734a, '陈昔':0xe85aa0, 'visitor':0x3fb950};
+const POS = {};
+
+class MainScene extends Phaser.Scene {
+  constructor(){super('main');this.avatars={};}
+
+  drawBuilding(g, b){
+    const bx = b.x*TILE, by = b.y*TILE, bw = b.w*TILE, bh = b.h*TILE;
+    // Shadow
+    g.fillStyle(0x000000, 0.35);
+    g.fillEllipse(bx+bw/2+6, by+bh+8, bw-8, 20);
+
+    if(b.style === 'gate'){
+      // Two gate pillars + arch
+      g.fillStyle(b.wall, 1);
+      g.fillRect(bx, by, 20, bh);
+      g.fillRect(bx+bw-20, by, 20, bh);
+      g.fillStyle(b.roof, 1);
+      g.fillRect(bx-4, by, bw+8, 12);
+      g.fillStyle(b.accent, 1);
+      g.fillRect(bx-4, by+10, bw+8, 4);
+      // Arch
+      g.fillStyle(b.wall, 0.9);
+      g.fillRect(bx+20, by, bw-40, 24);
+      return;
+    }
+
+    // Main body
+    g.fillStyle(b.wall, 1);
+    g.fillRect(bx, by, bw, bh);
+
+    // Window columns (vertical stripes for depth)
+    const cols = Math.max(3, Math.floor(bw/50));
+    const rows = Math.max(1, Math.floor(bh/44));
+    for(let c=0;c<cols;c++){
+      for(let r=0;r<rows;r++){
+        const wx = bx + 8 + c*((bw-16)/cols) + ((bw-16)/cols-18)/2;
+        const wy = by + 30 + r*((bh-40)/Math.max(1,rows)) + 4;
+        const ww = 18, wh = 20;
+        // Window frame
+        g.fillStyle(0x2a2520, 1);
+        g.fillRect(wx-1, wy-1, ww+2, wh+2);
+        // Glass
+        g.fillStyle(0x9ec5e8, 0.85);
+        g.fillRect(wx, wy, ww, wh);
+        g.fillStyle(0xffffff, 0.25);
+        g.fillRect(wx, wy, ww, wh/3);
+        // Cross
+        g.fillStyle(0x2a2520, 1);
+        g.fillRect(wx+ww/2-1, wy, 2, wh);
+        g.fillRect(wx, wy+wh/2-1, ww, 2);
+      }
+    }
+
+    // Roof — 淡江风格的斜坡红瓦
+    if(b.style === 'classic'){
+      // Sloped tile roof
+      g.fillStyle(b.roof, 1);
+      g.fillTriangle(bx-6, by, bx+bw+6, by, bx+bw/2, by-26);
+      g.lineStyle(1, b.accent, 1);
+      // Roof tile lines
+      for(let i=0;i<5;i++){
+        const t = i/5;
+        const y = by - 26 * (1-t);
+        const xl = bx + (bw/2) * t - 6*t - 6;
+        const xr = bx + bw - (bw/2) * t + 6*t + 6;
+        g.strokeLineShape(new Phaser.Geom.Line(xl, y, xr, y));
+      }
+      // Roof edge
+      g.fillStyle(b.accent, 1);
+      g.fillRect(bx-8, by, bw+16, 4);
+    }else if(b.style === 'modern'){
+      // Flat roof strip
+      g.fillStyle(b.roof, 1);
+      g.fillRect(bx-2, by-6, bw+4, 10);
+      g.fillStyle(b.accent, 1);
+      g.fillRect(bx-2, by, bw+4, 4);
+    }
+
+    // Wall edge shadow
+    g.fillStyle(0x000000, 0.08);
+    g.fillRect(bx, by+bh-6, bw, 6);
+  }
+
+  drawTree(g, x, y, variant=0){
+    // Shadow
+    g.fillStyle(0x000000, 0.3);
+    g.fillEllipse(x+3, y+14, 20, 6);
+    // Trunk
+    g.fillStyle(0x5a3a20, 1);
+    g.fillRect(x-2, y+2, 5, 10);
+    // Foliage — layered canopy
+    const colors = variant % 2 === 0
+      ? [0x2a6a22, 0x3a8a32, 0x5aaa4a]
+      : [0x4a8a30, 0x6aaa48, 0x8aca68];
+    g.fillStyle(colors[0], 1);
+    g.fillCircle(x, y, 14);
+    g.fillStyle(colors[1], 1);
+    g.fillCircle(x-5, y-3, 10);
+    g.fillCircle(x+6, y-2, 10);
+    g.fillStyle(colors[2], 1);
+    g.fillCircle(x-2, y-8, 7);
+  }
+
+  create(){
+    const g = this.add.graphics();
+
+    // === Grass base layer ===
+    g.fillStyle(0x6db44a, 1);
+    g.fillRect(0, 0, MAP_W*TILE, MAP_H*TILE);
+    // Grass texture patches
+    for(let i=0;i<40;i++){
+      g.fillStyle(Phaser.Math.RND.pick([0x5ca440, 0x7dc458, 0x4a943a]), 0.3);
+      g.fillCircle(Phaser.Math.Between(0,MAP_W*TILE), Phaser.Math.Between(0,MAP_H*TILE),
+                   Phaser.Math.Between(25, 70));
+    }
+    // Small grass tufts
+    for(let i=0;i<120;i++){
+      g.fillStyle(0x3a7a2a, 0.5);
+      const x=Phaser.Math.Between(0,MAP_W*TILE), y=Phaser.Math.Between(0,MAP_H*TILE);
+      g.fillCircle(x, y, 3);
+      g.fillCircle(x+3, y-1, 2);
+    }
+
+    // === Paths (stone/dirt) ===
+    const drawPath = (x, y, w, h)=>{
+      g.fillStyle(0xb5a07a, 1);
+      g.fillRect(x, y, w, h);
+      g.fillStyle(0x9a8560, 1);
+      g.fillRect(x, y+h-3, w, 3);
+      // Stone chips
+      for(let i=0;i<w/12;i++){
+        g.fillStyle(Phaser.Math.RND.pick([0xd8c896, 0xaa9a70, 0xc9b588]), 0.6);
+        g.fillRect(x + i*12 + Phaser.Math.Between(0,6), y + Phaser.Math.Between(0,h-3), 4, 3);
+      }
+    };
+    // Main paths
+    drawPath(0, 8*TILE-4, MAP_W*TILE, 28);
+    drawPath(0, 14*TILE-4, MAP_W*TILE, 24);
+    drawPath(11*TILE, 0, 28, MAP_H*TILE);
+    drawPath(19*TILE, 0, 24, 13*TILE);
+    drawPath(24*TILE, 13*TILE, 24, MAP_H*TILE);
+
+    // === 操场 (playground) ===
+    const fx = FIELD.x*TILE, fy = FIELD.y*TILE, fw = FIELD.w*TILE, fh = FIELD.h*TILE;
+    g.fillStyle(0x000000, 0.3);
+    g.fillRoundedRect(fx+5, fy+7, fw, fh, 10);
+    g.fillStyle(0x7cb448, 1);
+    g.fillRoundedRect(fx, fy, fw, fh, 10);
+    g.lineStyle(3, 0xffffff, 1);
+    g.strokeRoundedRect(fx, fy, fw, fh, 10);
+    // Running track oval
+    g.lineStyle(2, 0xffffff, 0.8);
+    g.strokeRoundedRect(fx+15, fy+15, fw-30, fh-30, 60);
+    // Basketball court
+    g.fillStyle(0xc29458, 1);
+    g.fillRoundedRect(fx+fw-180, fy+50, 150, fh-100, 5);
+    g.lineStyle(2, 0xffffff, 1);
+    g.strokeRoundedRect(fx+fw-180, fy+50, 150, fh-100, 5);
+    g.strokeCircle(fx+fw-105, fy+fh/2, 32);
+    g.strokeLineShape(new Phaser.Geom.Line(fx+fw-180, fy+fh/2, fx+fw-30, fy+fh/2));
+    // Labels
+    this.add.text(fx+80, fy+fh/2, '🏃 跑道', {
+      fontFamily:'"PingFang SC"', fontSize:'15px', color:'#fff',
+      stroke:'#000', strokeThickness:3
+    }).setOrigin(0.5);
+    this.add.text(fx+fw-105, fy+fh/2+55, '🏀 篮球场', {
+      fontFamily:'"PingFang SC"', fontSize:'13px', color:'#fff',
+      stroke:'#000', strokeThickness:3
+    }).setOrigin(0.5);
+    POS["操场"] = {x:fx+fw/2, y:fy+fh/2};
+
+    // === 后门小花园 ===
+    const gx = GARDEN.x*TILE, gy = GARDEN.y*TILE, gw = GARDEN.w*TILE, gh = GARDEN.h*TILE;
+    g.fillStyle(0x000000, 0.3);
+    g.fillRoundedRect(gx+5, gy+7, gw, gh, 12);
+    g.fillStyle(0x8ec458, 1);
+    g.fillRoundedRect(gx, gy, gw, gh, 12);
+    g.lineStyle(2, 0xffffff, 0.5);
+    g.strokeRoundedRect(gx, gy, gw, gh, 12);
+    // Stone path winding through
+    g.fillStyle(0xc8b488, 1);
+    for(let i=0;i<6;i++){
+      const px = gx + 20 + i*(gw-40)/5;
+      const py = gy + gh/2 + Math.sin(i)*20;
+      g.fillCircle(px, py, 8);
+    }
+    // Flowers (colorful)
+    for(let i=0;i<16;i++){
+      const fx2 = gx + Phaser.Math.Between(10, gw-10);
+      const fy2 = gy + Phaser.Math.Between(10, gh-10);
+      const c = Phaser.Math.RND.pick([0xff5588, 0xffd633, 0xff88cc, 0x9966ff, 0xffaa44]);
+      g.fillStyle(0x3a7a2a, 1);  // stem
+      g.fillRect(fx2, fy2+2, 1, 4);
+      g.fillStyle(c, 1);
+      g.fillCircle(fx2, fy2, 3);
+      g.fillStyle(0xffff99, 0.9);
+      g.fillCircle(fx2, fy2, 1.2);
+    }
+    this.add.text(gx+gw/2, gy+10, '🌿 后门小花园', {
+      fontFamily:'"PingFang SC"', fontSize:'12px', color:'#fff',
+      stroke:'#000', strokeThickness:3
+    }).setOrigin(0.5, 0);
+    POS["后门小花园"] = {x:gx+gw/2, y:gy+gh/2};
+
+    // === Draw all buildings ===
+    BLDS.forEach(b => {
+      this.drawBuilding(g, b);
+      const bx = b.x*TILE, by = b.y*TILE, bw = b.w*TILE, bh = b.h*TILE;
+      // Label below
+      this.add.text(bx+bw/2, by+bh+14, b.label, {
+        fontFamily:'"PingFang SC",sans-serif', fontSize:'14px', color:'#fff',
+        stroke:'#000', strokeThickness:3, fontStyle:'bold'
+      }).setOrigin(0.5, 0);
+      POS[b.name] = {x:bx+bw/2, y:by+bh/2};
+    });
+
+    // === Trees (scattered, clustered near buildings and paths) ===
+    const treeSpots = [
+      [1, 1.5], [1, 5.5], [1, 8.5], [2, 14.5], [11.5, 15.5], [11.5, 18.5],
+      [1, 21.5], [1.2, 19.5], [14, 14.5], [20, 15.5], [25, 15.5],
+      [32, 1.5], [32, 5.5], [32, 9.5], [32, 14], [32, 18],
+      [12, 1.5], [18, 1.5], [24, 1.5],
+      [11.5, 12.5], [19.5, 13], [24.5, 15.5], [19.5, 21.5], [24, 22],
+      [0.5, 11.5], [0.5, 4.5], [33, 11.5], [21, 0.5], [26, 0.5],
+    ];
+    treeSpots.forEach(([tx, ty], i) => this.drawTree(g, tx*TILE, ty*TILE, i));
+
+    // Bench/fountain near center plaza
+    const cx = 13*TILE + 3*TILE, cy = 15*TILE;
+    // Small decorative fountain
+    g.fillStyle(0x2a5a8a, 1);
+    g.fillCircle(cx, cy, 18);
+    g.fillStyle(0x3a7aaa, 1);
+    g.fillCircle(cx, cy, 14);
+    g.fillStyle(0x9ccfed, 0.8);
+    g.fillCircle(cx, cy, 10);
+
+    // === Camera & controls ===
+    this.cameras.main.setBounds(0, 0, MAP_W*TILE, MAP_H*TILE);
+    this.cameras.main.centerOn(MAP_W*TILE/2, MAP_H*TILE/2);
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.cameraAnchor = {x: MAP_W*TILE/2, y: MAP_H*TILE/2};
+
+    let dragStart = null;
+    this.input.on('pointerdown', p=>{dragStart={x:p.x,y:p.y,cx:this.cameraAnchor.x,cy:this.cameraAnchor.y}});
+    this.input.on('pointermove', p=>{
+      if(!dragStart || !p.isDown) return;
+      const z = this.cameras.main.zoom;
+      this.cameraAnchor.x = dragStart.cx - (p.x - dragStart.x)/z;
+      this.cameraAnchor.y = dragStart.cy - (p.y - dragStart.y)/z;
+      this.cameras.main.centerOn(this.cameraAnchor.x, this.cameraAnchor.y);
+    });
+    this.input.on('pointerup', ()=>{dragStart=null});
+    this.input.on('wheel', (p, o, dx, dy)=>{
+      const z = this.cameras.main.zoom + (dy>0?-0.08:0.08);
+      this.cameras.main.setZoom(Phaser.Math.Clamp(z, 0.4, 2.5));
+    });
+
+    document.getElementById('info').textContent = `南一高中 · ${BLDS.length+2} 处建筑 · 就绪`;
+  }
+
+  update(){
+    const speed = 8 / this.cameras.main.zoom;
+    if(this.cursors.left.isDown)this.cameraAnchor.x -= speed;
+    if(this.cursors.right.isDown)this.cameraAnchor.x += speed;
+    if(this.cursors.up.isDown)this.cameraAnchor.y -= speed;
+    if(this.cursors.down.isDown)this.cameraAnchor.y += speed;
+    this.cameras.main.centerOn(this.cameraAnchor.x, this.cameraAnchor.y);
+  }
+
+  updateState(s){
+    const seen = new Set();
+    const cnt = {};
+
+    const place = (name, sector, type, act) => {
+      const base = POS[sector] || POS["校门口"];
+      cnt[sector] = (cnt[sector] || 0) + 1;
+      const offset = (cnt[sector]-1) * 36 - ((cnt[sector]-1) * 18);
+      const x = base.x + offset;
+      const y = base.y + 20;
+
+      let av = this.avatars[name];
+      if(!av){
+        const color = type==='visitor' ? COLORS.visitor : (COLORS[name] || 0xcccccc);
+        // Body
+        const body = this.add.circle(x, y, 14, color).setStrokeStyle(2.5, 0xffffff);
+        const initial = this.add.text(x, y, name[0], {
+          fontSize:'13px', fontFamily:'"PingFang SC"', color:'#fff', fontStyle:'bold'
+        }).setOrigin(0.5);
+        // Head-glow ring
+        const ring = this.add.circle(x, y, 20, color, 0).setStrokeStyle(2, color, 0.5);
+        this.tweens.add({targets:ring, scale:1.4, alpha:0, duration:1500, repeat:-1});
+        // Name label
+        const label = this.add.text(x, y+22, name, {
+          fontSize:'12px', fontFamily:'"PingFang SC"', color:'#fff', fontStyle:'bold',
+          backgroundColor:'rgba(0,0,0,0.7)', padding:{x:6,y:2}, stroke:'#000', strokeThickness:1
+        }).setOrigin(0.5, 0);
+        // Action bubble
+        const bubble = this.add.text(x, y-30, '', {
+          fontSize:'10px', fontFamily:'"PingFang SC"', color:'#fff',
+          backgroundColor:'rgba(0,0,0,0.75)', padding:{x:6,y:3}, wordWrap:{width:160}
+        }).setOrigin(0.5, 1);
+        av = {body, text:initial, ring, label, bubble};
+        this.avatars[name] = av;
+      }
+
+      const shortAct = (act||'').replace(/\[\(ID:\w+\)[^\]]*\]\s*Activity:\s*/g,'').slice(0,40);
+      av.bubble.setText(shortAct ? shortAct+(shortAct.length>=40?'…':'') : '');
+
+      // Smooth tween
+      const duration = 900;
+      this.tweens.add({targets:[av.body, av.text, av.ring], x, y, duration, ease:'Sine.Out'});
+      this.tweens.add({targets:av.label, x, y:y+22, duration, ease:'Sine.Out'});
+      this.tweens.add({targets:av.bubble, x, y:y-30, duration, ease:'Sine.Out'});
+      seen.add(name);
+    };
+
+    (s.npcs||[]).forEach(n=>place(n.name, n.sector||'校门口', 'npc', n.action));
+    (s.visitors||[]).forEach(v=>place(v.name, v.sector||'校门口', 'visitor', '(访客)'));
+
+    Object.keys(this.avatars).forEach(name=>{
+      if(!seen.has(name)){
+        const a = this.avatars[name];
+        [a.body, a.text, a.ring, a.label, a.bubble].forEach(x=>x && x.destroy());
+        delete this.avatars[name];
+      }
+    });
+  }
+}
+
+const game = new Phaser.Game({
+  type: Phaser.AUTO,
+  parent: 'game',
+  width: window.innerWidth,
+  height: window.innerHeight,
+  backgroundColor: '#6db44a',
+  scale: {mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH},
+  scene: MainScene,
+  pixelArt: false,
+});
+
+window.addEventListener('resize', ()=>game.scale.resize(window.innerWidth, window.innerHeight));
+window.addEventListener('message', ev=>{
+  if(ev.data && ev.data.type==='state'){
+    const scene = game.scene.getScene('main');
+    if(scene && scene.updateState) scene.updateState(ev.data.state);
+  }
+});
+</script>
+</body></html>

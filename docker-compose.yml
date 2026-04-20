@@ -1,0 +1,20 @@
+services:
+  app:
+    build: .
+    image: nanyi-demo:latest
+    container_name: nanyi-demo
+    ports:
+      - "8090:8090"
+    environment:
+      # LLM (LiteLLM gateway)
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-https://litellm.quickcan.com}
+      LITELLM_API_KEY: ${LITELLM_API_KEY}
+      LLM_MODEL: ${LLM_MODEL:-doubao-seed-1.8}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      # DB: set to Postgres URL for production
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////app/server/app.db}
+    volumes:
+      # Persist persona bootstrap memory (not rebuilt by image)
+      - ./environment/frontend_server/storage:/app/environment/frontend_server/storage
+      - ./server/app.db:/app/server/app.db
+    restart: unless-stopped

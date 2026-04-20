@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>LBS Map</title>
+<style>
+:root{--zhong:#4a90d9;--zhou:#e8734a;--chen:#e85aa0;--visitor:#3fb950;--accent:#58a6ff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"PingFang SC",sans-serif;background:#3a7a32;
+  background-image:radial-gradient(circle at 20% 80%,#2d6a25 0%,transparent 50%),
+                   radial-gradient(circle at 80% 20%,#4a8a42 0%,transparent 40%);
+  overflow:hidden;height:100vh;color:#fff}
+.campus{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:820px;height:520px}
+.road{position:absolute;background:#c4b896;border:1px solid #a89a70}
+.tree{position:absolute;width:14px;height:14px;border-radius:50%;background:#2a6a22}
+.tree::after{content:'';position:absolute;width:3px;height:5px;background:#5a4020;bottom:-3px;left:5.5px}
+.bld{position:absolute;border-radius:4px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;box-shadow:2px 3px 8px rgba(0,0,0,.4);z-index:2}
+.bld .roof{position:absolute;top:-5px;left:-2px;right:-2px;height:7px;border-radius:3px 3px 0 0}
+.bld .b-name{font-size:11px;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.6);text-align:center}
+.bld .b-sub{font-size:8px;color:rgba(255,255,255,.6)}
+.bld.active{box-shadow:0 0 20px rgba(88,166,255,.35);z-index:5}
+.bld-teach{background:linear-gradient(135deg,#6a5a4a,#5a4a3a)}.bld-teach .roof{background:#8a7a6a}
+.bld-admin{background:linear-gradient(135deg,#5a6a7a,#4a5a6a)}.bld-admin .roof{background:#7a8a9a}
+.bld-lib{background:linear-gradient(135deg,#7a6a5a,#6a5a4a)}.bld-lib .roof{background:#9a8a7a}
+.bld-cafe{background:linear-gradient(135deg,#8a6a4a,#7a5a3a)}.bld-cafe .roof{background:#aa8a6a}
+.bld-canteen{background:linear-gradient(135deg,#6a6a5a,#5a5a4a)}.bld-canteen .roof{background:#8a8a7a}
+.bld-shop{background:linear-gradient(135deg,#7a6a5a,#6a5a4a)}.bld-shop .roof{background:#9a8a7a}
+.bld-gate{background:linear-gradient(135deg,#8a8a8a,#6a6a6a);border:2px solid #aaa}
+.bld-roof-top{background:linear-gradient(135deg,#7a7a7a,#5a5a5a)}.bld-roof-top .roof{background:#9a9a9a}
+.field{position:absolute;border-radius:6px;background:#5a8a4a;border:2px solid #fff;z-index:1}
+.court{position:absolute;border:1.5px solid rgba(255,255,255,.6);border-radius:3px}
+.court-circle{position:absolute;width:28px;height:28px;border:1.5px solid rgba(255,255,255,.6);border-radius:50%}
+.track{position:absolute;border:1.5px solid rgba(255,255,255,.4);border-radius:40px}
+.garden{position:absolute;border-radius:8px;background:linear-gradient(135deg,#4a8a40,#3a7a30);
+  border:1px dashed rgba(255,255,255,.3);z-index:1}
+.flower{position:absolute;width:5px;height:5px;border-radius:50%}
+.avatar{position:absolute;z-index:10;display:flex;flex-direction:column;align-items:center;
+  transition:left .8s ease,top .8s ease;pointer-events:none}
+.av-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5);border:2px solid #fff;position:relative}
+.av-dot.钟辰时{background:var(--zhong)}.av-dot.周往{background:var(--zhou)}.av-dot.陈昔{background:var(--chen)}
+.av-dot.visitor{background:var(--visitor)}
+.av-dot .pulse{position:absolute;inset:-4px;border-radius:50%;border:2px solid;animation:pulse 2s infinite}
+.av-dot.钟辰时 .pulse{border-color:var(--zhong)}.av-dot.周往 .pulse{border-color:var(--zhou)}
+.av-dot.陈昔 .pulse{border-color:var(--chen)}.av-dot.visitor .pulse{border-color:var(--visitor)}
+@keyframes pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.5);opacity:0}}
+.av-label{margin-top:3px;font-size:9px;font-weight:600;background:rgba(0,0,0,.6);
+  padding:1px 6px;border-radius:3px;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="campus" id="campus"></div>
+<script>
+const BLDS=[
+  {id:"教学楼",cls:"bld-teach",x:60,y:50,w:170,h:100,label:"教学楼",sub:"高二三班 · 音乐教室"},
+  {id:"行政楼",cls:"bld-admin",x:60,y:205,w:130,h:65,label:"行政楼",sub:"学生会 · 办公室"},
+  {id:"图书馆",cls:"bld-lib",x:270,y:50,w:120,h:75,label:"📚 图书馆",sub:"阅读区 · 自习区"},
+  {id:"食堂",cls:"bld-canteen",x:270,y:185,w:120,h:75,label:"🍜 食堂",sub:"一楼 · 二楼"},
+  {id:"咖啡厅",cls:"bld-cafe",x:270,y:320,w:95,h:50,label:"☕ 咖啡厅",sub:""},
+  {id:"天台",cls:"bld-roof-top",x:440,y:270,w:85,h:45,label:"🌙 天台",sub:""},
+  {id:"小卖部",cls:"bld-shop",x:570,y:270,w:75,h:45,label:"🏪 小卖部",sub:""},
+  {id:"校门口",cls:"bld-gate",x:610,y:410,w:110,h:45,label:"🚪 校门口",sub:""},
+];
+const FIELD={x:440,y:50,w:230,h:175};
+const GARDEN={x:60,y:340,w:150,h:70};
+const POS={};
+let avatars={};
+
+function build(){
+  const c=document.getElementById('campus');
+  [[250,0,10,490],[0,170,820,8],[420,0,8,490],[0,305,440,6],[440,250,230,6]].forEach(([x,y,w,h])=>{
+    const r=document.createElement('div');r.className='road';
+    r.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${h}px`;c.appendChild(r)});
+  [[18,18],[230,28],[230,140],[18,170],[18,300],[415,310],[415,360],[690,45],[740,95],
+   [690,185],[410,425],[500,425],[220,360],[220,420],[145,440],[375,440],[540,45],[540,185]].forEach(([x,y])=>{
+    const t=document.createElement('div');t.className='tree';
+    t.style.cssText=`left:${x}px;top:${y}px`;c.appendChild(t)});
+  const f=document.createElement('div');f.className='field';
+  f.style.cssText=`left:${FIELD.x}px;top:${FIELD.y}px;width:${FIELD.w}px;height:${FIELD.h}px`;
+  f.innerHTML=`<div class="court" style="left:10px;top:10px;width:95px;height:${FIELD.h-20}px"></div>
+    <div class="court-circle" style="left:42px;top:${(FIELD.h-28)/2}px"></div>
+    <div class="track" style="left:125px;top:12px;width:90px;height:${FIELD.h-24}px"></div>
+    <div style="position:absolute;left:18px;top:${FIELD.h/2-6}px;font-size:9px;color:rgba(255,255,255,.7);font-weight:700">🏀 篮球场</div>
+    <div style="position:absolute;left:140px;top:${FIELD.h/2-6}px;font-size:9px;color:rgba(255,255,255,.5)">🏃 跑道</div>`;
+  c.appendChild(f);POS["操场"]={x:FIELD.x+FIELD.w/2,y:FIELD.y+FIELD.h/2};
+
+  const g=document.createElement('div');g.className='garden';
+  g.style.cssText=`left:${GARDEN.x}px;top:${GARDEN.y}px;width:${GARDEN.w}px;height:${GARDEN.h}px`;
+  g.innerHTML=`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600">🌿 后门小花园</div>`;
+  [[18,12,'#e88'],[45,50,'#ee8'],[90,15,'#e8e'],[120,45,'#8ef'],[70,58,'#fe8']].forEach(([x,y,col])=>{
+    const fl=document.createElement('div');fl.className='flower';
+    fl.style.cssText=`left:${x}px;top:${y}px;background:${col}`;g.appendChild(fl)});
+  c.appendChild(g);POS["后门小花园"]={x:GARDEN.x+GARDEN.w/2,y:GARDEN.y+GARDEN.h/2};
+
+  BLDS.forEach(b=>{
+    const el=document.createElement('div');el.className=`bld ${b.cls}`;el.id='bld-'+b.id;
+    el.style.cssText=`left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px`;
+    el.innerHTML=`<div class="roof"></div><div class="b-name">${b.label}</div><div class="b-sub">${b.sub}</div>`;
+    c.appendChild(el);POS[b.id]={x:b.x+b.w/2,y:b.y+b.h/2}});
+}
+
+function ensureAvatar(name, type){
+  if(avatars[name]) return avatars[name];
+  const c=document.getElementById('campus');
+  const wrap=document.createElement('div');wrap.className='avatar';wrap.id='av-'+name;
+  const cls = type==='visitor' ? 'visitor' : name;
+  wrap.innerHTML=`<div class="av-dot ${cls}"><span>${name[0]}</span><div class="pulse"></div></div>
+    <div class="av-label">${name}</div>`;
+  c.appendChild(wrap);
+  avatars[name] = {el:wrap, type};
+  return avatars[name];
+}
+
+function updateState(s){
+  // Clear active flags
+  BLDS.forEach(b=>document.getElementById('bld-'+b.id)?.classList.remove('active'));
+  const seen = new Set();
+  // Spread multiple avatars at same sector to avoid overlap
+  const cnt = {};
+  const placeAvatar = (name, sector, type)=>{
+    const pos = POS[sector] || POS["校门口"];
+    cnt[sector] = (cnt[sector]||0) + 1;
+    const offset = (cnt[sector]-1) * 26 - ((cnt[sector]-1) * 13);
+    const ax = pos.x + offset - 14;
+    const ay = pos.y - 22;
+    const a = ensureAvatar(name, type);
+    a.el.style.left = ax + 'px';
+    a.el.style.top = ay + 'px';
+    seen.add(name);
+    const el = document.getElementById('bld-'+sector);
+    if(el) el.classList.add('active');
+  };
+  (s.npcs||[]).forEach(n=>placeAvatar(n.name, n.sector||'校门口', 'npc'));
+  (s.visitors||[]).forEach(v=>placeAvatar(v.name, v.sector||'校门口', 'visitor'));
+  // Remove avatars no longer present
+  Object.keys(avatars).forEach(name=>{
+    if(!seen.has(name)){ avatars[name].el.remove(); delete avatars[name]; }
+  });
+}
+
+build();
+window.addEventListener('message', ev=>{
+  if(ev.data && ev.data.type==='state') updateState(ev.data.state);
+});
+</script>
+</body></html>

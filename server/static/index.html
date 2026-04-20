@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>角色世界模拟器 — 南一高中</title>
+<style>
+:root{--bg:#0d1017;--card:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;
+      --accent:#58a6ff;--zhong:#4a90d9;--zhou:#e8734a;--chen:#e85aa0;--visitor:#3fb950}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"PingFang SC",sans-serif;background:var(--bg);color:var(--text);
+  display:flex;flex-direction:column;height:100vh;overflow:hidden}
+/* topbar */
+.topbar{height:48px;background:var(--card);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.topbar h1{font-size:15px;font-weight:600}
+.topbar .badge{font-size:11px;background:var(--accent);color:#fff;padding:2px 7px;border-radius:4px}
+.sim-time{font-size:24px;font-weight:700;color:var(--accent);margin-left:12px;
+  font-variant-numeric:tabular-nums}
+.topbar .sep{flex:1}
+.topbar .user-info{font-size:12px;color:var(--muted)}
+.topbar button{background:#21262d;color:var(--text);border:1px solid var(--border);
+  padding:5px 12px;border-radius:5px;cursor:pointer;font-size:12px}
+.topbar button:hover{border-color:var(--accent);color:var(--accent)}
+/* tabs */
+.tabs{height:36px;background:#0d1017;border-bottom:1px solid var(--border);display:flex;flex-shrink:0}
+.tab{padding:0 18px;display:flex;align-items:center;font-size:13px;cursor:pointer;color:var(--muted);
+  border-right:1px solid var(--border);transition:.15s}
+.tab.active{background:var(--card);color:var(--text);border-bottom:2px solid var(--accent)}
+.tab:hover{color:var(--text)}
+/* main */
+.main{flex:1;display:grid;grid-template-columns:1fr 420px;overflow:hidden}
+.viewport{position:relative;overflow:hidden;background:#3a7a32}
+.viewport iframe{width:100%;height:100%;border:0;display:block}
+/* right panel */
+.right{background:var(--card);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.right-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.rtab{flex:1;padding:10px;font-size:12px;text-align:center;cursor:pointer;color:var(--muted)}
+.rtab.active{color:var(--text);background:#0d1017;border-bottom:2px solid var(--accent)}
+.right-content{flex:1;overflow-y:auto;padding:16px}
+.right-content.hidden{display:none}
+/* npc cards */
+.npc-card{background:#0d1017;padding:12px;border-radius:8px;margin-bottom:10px;border-left:3px solid}
+.npc-card.钟辰时{border-color:var(--zhong)}
+.npc-card.周往{border-color:var(--zhou)}
+.npc-card.陈昔{border-color:var(--chen)}
+.npc-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.npc-head .av{width:28px;height:28px;border-radius:50%;color:#fff;display:flex;
+  align-items:center;justify-content:center;font-weight:700;font-size:12px}
+.npc-head .av.钟辰时{background:var(--zhong)}
+.npc-head .av.周往{background:var(--zhou)}
+.npc-head .av.陈昔{background:var(--chen)}
+.npc-head .name{font-size:14px;font-weight:600;flex:1}
+.npc-head .emoji{font-size:18px}
+.npc-loc{font-size:11px;color:var(--muted);margin-bottom:6px}
+.npc-act{font-size:12px;line-height:1.5}
+.npc-chat-btn{margin-top:8px;width:100%;padding:6px;background:var(--accent);color:#fff;
+  border:none;border-radius:5px;cursor:pointer;font-size:11px}
+/* chat filter tabs */
+.chat-filters{display:flex;gap:4px;margin-bottom:10px;flex-shrink:0}
+.cf{flex:1;padding:6px 4px;font-size:11px;text-align:center;cursor:pointer;color:var(--muted);
+  background:#0d1017;border:1px solid var(--border);border-radius:5px;transition:.15s;
+  display:flex;align-items:center;justify-content:center;gap:4px}
+.cf:hover{color:var(--text);border-color:var(--accent)}
+.cf.active{color:#fff;background:var(--accent);border-color:var(--accent)}
+.cf-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+/* chat */
+.chat-log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px}
+.chat-msg{font-size:12px;line-height:1.5}
+.chat-msg .meta{color:var(--muted);font-size:10px;margin-bottom:2px}
+.chat-msg .bubble{padding:8px 12px;border-radius:8px;background:#21262d;display:inline-block;max-width:90%}
+.chat-msg.user .meta{color:var(--visitor)}
+.chat-msg.npc .meta{color:var(--accent)}
+.chat-msg.npc-npc .meta{color:#c9a63e}
+.send-hint{font-size:11px;color:var(--muted);margin-top:8px;padding:4px 8px;flex-shrink:0;
+  transition:color .2s}
+.chat-input{margin-top:4px;display:flex;gap:6px;flex-shrink:0}
+.chat-input select{background:#0d1017;border:1px solid var(--border);color:var(--text);
+  padding:7px;border-radius:5px;font-size:12px;width:90px}
+.chat-input input{flex:1;background:#0d1017;border:1px solid var(--border);color:var(--text);
+  padding:7px 10px;border-radius:5px;font-size:12px}
+.chat-input button{background:var(--accent);color:#fff;border:none;padding:7px 12px;
+  border-radius:5px;cursor:pointer;font-size:12px}
+/* god panel */
+.god-row{margin-bottom:10px}
+.god-row label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+.god-row select,.god-row input{width:100%;background:#0d1017;border:1px solid var(--border);
+  color:var(--text);padding:7px;border-radius:5px;font-size:12px}
+.god-row button{width:100%;margin-top:6px;background:#c9a63e;color:#000;border:none;
+  padding:8px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600}
+.visitor-ctl{margin-top:20px;padding:12px;background:#0d1017;border-radius:8px}
+.visitor-ctl h3{font-size:12px;margin-bottom:8px;color:var(--muted)}
+.visitor-ctl .vkeys{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:8px}
+.visitor-ctl button{background:#21262d;border:1px solid var(--border);color:var(--text);
+  padding:6px;border-radius:4px;cursor:pointer;font-size:11px}
+.status{padding:8px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);flex-shrink:0}
+.status .connected{color:var(--visitor)}
+.status .disconnected{color:#f85149}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>角色世界模拟器</h1>
+  <span class="badge">南一高中</span>
+  <div class="sim-time" id="simTime">--:--</div>
+  <div class="sep"></div>
+  <div class="user-info">👤 <span id="username">-</span></div>
+  <button onclick="toggleVisitor()" id="visitorBtn">🚪 进入世界</button>
+  <button onclick="logout()">退出</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="lbs" onclick="switchTab('lbs')">🗺️ 校园地图</div>
+  <div class="tab" data-tab="phaser" onclick="switchTab('phaser')">🎮 像素地图</div>
+</div>
+
+<div class="main">
+  <div class="viewport">
+    <iframe id="viewFrame" src="/static/map_lbs.html"></iframe>
+  </div>
+
+  <div class="right">
+    <div class="right-tabs">
+      <div class="rtab active" data-rtab="state" onclick="switchRTab('state')">角色</div>
+      <div class="rtab" data-rtab="chat" onclick="switchRTab('chat')">对话</div>
+      <div class="rtab" data-rtab="god" onclick="switchRTab('god')">指令</div>
+    </div>
+
+    <div class="right-content" id="rc-state">
+      <div id="npcList"></div>
+      <div class="visitor-ctl" id="visitorCtl" style="display:none">
+        <h3>🚪 访客控制</h3>
+        <div style="font-size:11px;color:var(--muted)">你已进入世界，在地图上显示为绿色访客。</div>
+        <div class="vkeys">
+          <button></button>
+          <button onclick="moveVisitor(0,-1)">↑ 上</button>
+          <button></button>
+          <button onclick="moveVisitor(-1,0)">← 左</button>
+          <button onclick="moveVisitor(0,1)">↓ 下</button>
+          <button onclick="moveVisitor(1,0)">右 →</button>
+        </div>
+        <div style="margin-top:10px">
+          <label style="font-size:11px;color:var(--muted)">快速传送到</label>
+          <select id="teleportTo" onchange="teleport()">
+            <option value="">-- 选择地点 --</option>
+            <option value="教学楼">教学楼</option>
+            <option value="图书馆">图书馆</option>
+            <option value="食堂">食堂</option>
+            <option value="咖啡厅">咖啡厅</option>
+            <option value="操场">操场</option>
+            <option value="天台">天台</option>
+            <option value="小卖部">小卖部</option>
+            <option value="后门小花园">后门小花园</option>
+            <option value="校门口">校门口</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-content hidden" id="rc-chat" style="display:none;flex-direction:column">
+      <div class="chat-filters" id="chatFilters">
+        <div class="cf active" data-filter="all" onclick="setChatFilter('all')">全部</div>
+        <div class="cf" data-filter="钟辰时" onclick="setChatFilter('钟辰时')">
+          <span class="cf-dot" style="background:var(--zhong)"></span>钟辰时
+        </div>
+        <div class="cf" data-filter="周往" onclick="setChatFilter('周往')">
+          <span class="cf-dot" style="background:var(--zhou)"></span>周往
+        </div>
+        <div class="cf" data-filter="陈昔" onclick="setChatFilter('陈昔')">
+          <span class="cf-dot" style="background:var(--chen)"></span>陈昔
+        </div>
+      </div>
+      <div class="chat-log" id="chatLog"></div>
+      <div class="send-hint" id="sendHint">↗ 将发给 钟辰时</div>
+      <div class="chat-input">
+        <select id="chatTo" onchange="setChatFilter(this.value);updateSendHint()">
+          <option value="钟辰时">钟辰时</option>
+          <option value="周往">周往</option>
+          <option value="陈昔">陈昔</option>
+        </select>
+        <input id="chatMsg" placeholder="提到 TA 的名字会自动发给 TA…"
+               oninput="updateSendHint()"
+               onkeydown="if(event.key==='Enter')sendChat()">
+        <button onclick="sendChat()">发送</button>
+      </div>
+    </div>
+
+    <div class="right-content hidden" id="rc-god" style="display:none">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+        上帝视角：直接操控 NPC 的位置和行为
+      </div>
+      <div class="god-row">
+        <label>目标角色</label>
+        <select id="godTarget">
+          <option value="钟辰时">钟辰时</option>
+          <option value="周往">周往</option>
+          <option value="陈昔">陈昔</option>
+        </select>
+      </div>
+      <div class="god-row">
+        <label>强制移动到</label>
+        <select id="godSector">
+          <option value="教学楼">教学楼</option>
+          <option value="图书馆">图书馆</option>
+          <option value="食堂">食堂</option>
+          <option value="咖啡厅">咖啡厅</option>
+          <option value="操场">操场</option>
+          <option value="天台">天台</option>
+          <option value="小卖部">小卖部</option>
+          <option value="后门小花园">后门小花园</option>
+          <option value="校门口">校门口</option>
+          <option value="行政楼">行政楼</option>
+        </select>
+        <button onclick="sendGodCmd()">执行</button>
+      </div>
+    </div>
+
+    <div class="status">
+      <span id="wsStatus" class="disconnected">● 未连接</span>
+      <span id="tickInfo" style="margin-left:10px"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+let state = null;
+let isVisitor = false;
+let ws = null;
+let currentUser = '';
+let chatFilter = 'all';       // 'all' | '钟辰时' | '周往' | '陈昔'
+let allChats = [];            // accumulated messages for filtering
+
+// ---------- tabs ----------
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  const f = document.getElementById('viewFrame');
+  f.src = name==='phaser' ? '/static/map_phaser.html' : '/static/map_lbs.html';
+}
+function switchRTab(name){
+  document.querySelectorAll('.rtab').forEach(t=>t.classList.toggle('active',t.dataset.rtab===name));
+  document.getElementById('rc-state').style.display = name==='state' ? '' : 'none';
+  document.getElementById('rc-chat').style.display = name==='chat' ? 'flex' : 'none';
+  document.getElementById('rc-god').style.display = name==='god' ? '' : 'none';
+}
+
+// ---------- login ----------
+async function loadMe(){
+  const r = await fetch('/api/me');
+  if(!r.ok){location.href='/login';return}
+  const d = await r.json();
+  currentUser = d.username;
+  document.getElementById('username').textContent = currentUser;
+}
+async function logout(){
+  await fetch('/api/logout',{method:'POST'});
+  location.href='/login';
+}
+
+// ---------- visitor ----------
+async function toggleVisitor(){
+  if(!isVisitor){
+    const r = await fetch('/api/visitor/join',{method:'POST'});
+    if(r.ok){isVisitor=true;document.getElementById('visitorBtn').textContent='🚪 离开世界';
+      document.getElementById('visitorCtl').style.display='block';}
+  }else{
+    const r = await fetch('/api/visitor/leave',{method:'POST'});
+    if(r.ok){isVisitor=false;document.getElementById('visitorBtn').textContent='🚪 进入世界';
+      document.getElementById('visitorCtl').style.display='none';}
+  }
+}
+async function moveVisitor(dx,dy){
+  await fetch('/api/visitor/move',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({dx,dy})});
+}
+async function teleport(){
+  const s = document.getElementById('teleportTo').value;
+  if(!s)return;
+  await fetch('/api/visitor/teleport',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({sector:s})});
+  document.getElementById('teleportTo').value='';
+}
+
+// ---------- chat ----------
+function detectMentionedNpc(msg){
+  // Return the first NPC name mentioned in msg, or null
+  const hits = NPC_NAMES.map(n=>({name:n, idx: msg.indexOf(n)})).filter(x=>x.idx>=0);
+  if(hits.length===0) return null;
+  // Earliest mention wins
+  hits.sort((a,b)=>a.idx-b.idx);
+  return hits[0].name;
+}
+
+function updateSendHint(){
+  const msg = document.getElementById('chatMsg').value;
+  const mentioned = detectMentionedNpc(msg);
+  const selected = document.getElementById('chatTo').value;
+  const hint = document.getElementById('sendHint');
+  if(mentioned && mentioned !== selected){
+    hint.textContent = `↗ 将发给 ${mentioned}（检测到提及）`;
+    hint.style.color = '#c9a63e';
+  }else{
+    hint.textContent = `↗ 将发给 ${selected}`;
+    hint.style.color = 'var(--muted)';
+  }
+}
+
+async function sendChat(){
+  const selected = document.getElementById('chatTo').value;
+  const msg = document.getElementById('chatMsg').value.trim();
+  if(!msg)return;
+  const mentioned = detectMentionedNpc(msg);
+  const to = mentioned || selected;
+  await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({to_npc:to,msg})});
+  document.getElementById('chatMsg').value='';
+  updateSendHint();
+}
+
+// ---------- god ----------
+async function sendGodCmd(){
+  const target = document.getElementById('godTarget').value;
+  const sector = document.getElementById('godSector').value;
+  await fetch('/api/god',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({type:'force_move',target,sector})});
+}
+
+// ---------- render ----------
+function renderState(s){
+  state = s;
+  document.getElementById('simTime').textContent = s.sim_time.split(' ')[1] || s.sim_time;
+  document.getElementById('tickInfo').textContent = `Tick ${s.tick}`;
+
+  const list = document.getElementById('npcList');
+  let html = '';
+  s.npcs.forEach(n=>{
+    const act = (n.action||'idle').slice(0,150);
+    html += `<div class="npc-card ${n.name}">
+      <div class="npc-head">
+        <div class="av ${n.name}">${n.name[0]}</div>
+        <div class="name">${n.name}</div>
+        <div class="emoji">${n.emoji||''}</div>
+      </div>
+      <div class="npc-loc">📍 ${n.sector||'?'}${n.arena?' · '+n.arena:''}</div>
+      <div class="npc-act">${act}</div>
+      <button class="npc-chat-btn" onclick="document.getElementById('chatTo').value='${n.name}';switchRTab('chat');document.getElementById('chatMsg').focus()">
+        💬 跟 TA 说话
+      </button>
+    </div>`;
+  });
+  // Show visitors too
+  s.visitors.forEach(v=>{
+    html += `<div class="npc-card" style="border-color:var(--visitor)">
+      <div class="npc-head">
+        <div class="av" style="background:var(--visitor)">${v.name[0].toUpperCase()}</div>
+        <div class="name">${v.name} <span style="font-size:10px;color:var(--muted)">(访客)</span></div>
+      </div>
+      <div class="npc-loc">📍 ${v.sector||'?'}${v.arena?' · '+v.arena:''}</div>
+    </div>`;
+  });
+  list.innerHTML = html;
+
+  // Forward to iframe
+  const f = document.getElementById('viewFrame');
+  if(f && f.contentWindow){
+    f.contentWindow.postMessage({type:'state', state:s}, '*');
+  }
+}
+
+const NPC_NAMES = ['钟辰时','周往','陈昔'];
+
+function entryNpc(entry){
+  // Which NPC is involved in this entry?
+  if(NPC_NAMES.includes(entry.from)) return entry.from;
+  if(NPC_NAMES.includes(entry.to)) return entry.to;
+  return null;
+}
+
+function entryMatchesFilter(entry){
+  if(chatFilter==='all') return true;
+  return entryNpc(entry) === chatFilter;
+}
+
+function renderAllChats(){
+  const log = document.getElementById('chatLog');
+  log.innerHTML = '';
+  allChats.filter(entryMatchesFilter).forEach(e=>appendChatDom(e));
+  log.scrollTop = log.scrollHeight;
+}
+
+function appendChatDom(entry){
+  const log = document.getElementById('chatLog');
+  const kind = entry.kind || '';
+  let cls = 'npc-npc';
+  if(kind==='user_to_npc')cls='user';
+  else if(kind==='npc_to_user')cls='npc';
+  const div = document.createElement('div');
+  div.className = `chat-msg ${cls}`;
+  div.innerHTML = `<div class="meta">${entry.time||''} ${entry.from||''} → ${entry.to||''}</div>
+    <div class="bubble">${entry.msg||''}</div>`;
+  log.appendChild(div);
+}
+
+function renderChat(entry){
+  allChats.push(entry);
+  if(entryMatchesFilter(entry)){
+    appendChatDom(entry);
+    document.getElementById('chatLog').scrollTop = document.getElementById('chatLog').scrollHeight;
+  }
+}
+
+function setChatFilter(name){
+  chatFilter = name;
+  document.querySelectorAll('.cf').forEach(el=>{
+    el.classList.toggle('active', el.dataset.filter === name);
+  });
+  // Sync the dropdown if a specific NPC is selected
+  if(name !== 'all'){
+    document.getElementById('chatTo').value = name;
+  }
+  renderAllChats();
+}
+
+async function loadChatHistory(){
+  const r = await fetch('/api/chat_history?limit=100');
+  if(!r.ok)return;
+  const d = await r.json();
+  allChats = d.history || [];
+  renderAllChats();
+}
+
+// ---------- keyboard for visitor ----------
+document.addEventListener('keydown', e=>{
+  // Only when chat input not focused
+  if(document.activeElement.tagName === 'INPUT') return;
+  if(!isVisitor) return;
+  let dx=0, dy=0;
+  if(e.key==='ArrowUp'||e.key==='w')dy=-1;
+  else if(e.key==='ArrowDown'||e.key==='s')dy=1;
+  else if(e.key==='ArrowLeft'||e.key==='a')dx=-1;
+  else if(e.key==='ArrowRight'||e.key==='d')dx=1;
+  if(dx||dy){e.preventDefault();moveVisitor(dx,dy)}
+});
+
+// ---------- WS ----------
+function connectWS(){
+  const proto = location.protocol==='https:'?'wss':'ws';
+  ws = new WebSocket(`${proto}://${location.host}/ws`);
+  ws.onopen = ()=>{
+    document.getElementById('wsStatus').textContent='● 已连接';
+    document.getElementById('wsStatus').className='connected';
+  };
+  ws.onmessage = ev=>{
+    try{
+      const d = JSON.parse(ev.data);
+      if(d.type==='state')renderState(d);
+      else if(d.type==='chat')renderChat(d.entry);
+    }catch(e){}
+  };
+  ws.onclose = ()=>{
+    document.getElementById('wsStatus').textContent='● 断线，5s 后重连';
+    document.getElementById('wsStatus').className='disconnected';
+    setTimeout(connectWS, 5000);
+  };
+}
+
+// ---------- init ----------
+(async ()=>{
+  await loadMe();
+  await loadChatHistory();
+  connectWS();
+  setInterval(()=>{if(ws&&ws.readyState===1)ws.send('ping')}, 30000);
+})();
+</script>
+</body></html>

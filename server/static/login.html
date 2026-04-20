@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>登录 — 角色世界模拟器</title>
+<style>
+body{font-family:"PingFang SC",sans-serif;background:#1a1d22;color:#e6edf3;
+  display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+.box{background:#161b22;padding:32px 40px;border:1px solid #30363d;border-radius:10px;width:320px}
+h1{font-size:18px;margin-bottom:20px}
+label{display:block;font-size:12px;color:#8b949e;margin-bottom:4px;margin-top:12px}
+input{width:100%;padding:8px 10px;background:#0d1017;border:1px solid #30363d;
+  border-radius:6px;color:#e6edf3;font-size:13px}
+button{width:100%;margin-top:20px;padding:10px;background:#58a6ff;border:none;
+  border-radius:6px;color:#fff;font-weight:600;cursor:pointer;font-size:14px}
+.hint{font-size:11px;color:#8b949e;margin-top:12px;text-align:center}
+.err{color:#f85149;font-size:12px;margin-top:8px;min-height:16px}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>角色世界模拟器 — 南一高中</h1>
+<label>用户名</label>
+<input id="u" autofocus placeholder="admin / guest">
+<label>密码</label>
+<input id="p" type="password" placeholder="nanyi2026">
+<button onclick="login()">登录</button>
+<div class="err" id="err"></div>
+<div class="hint">内部测试 · admin/guest · 密码 nanyi2026</div>
+</div>
+<script>
+async function login(){
+  const u=document.getElementById('u').value.trim();
+  const p=document.getElementById('p').value;
+  const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({username:u,password:p})});
+  if(r.ok){location.href='/'}else{
+    document.getElementById('err').textContent='登录失败：用户名或密码错误'
+  }
+}
+document.getElementById('p').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+</script>
+</body></html>
