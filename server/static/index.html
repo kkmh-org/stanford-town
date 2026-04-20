@@ -53,6 +53,15 @@ body{font-family:"PingFang SC",sans-serif;background:var(--bg);color:var(--text)
 .npc-head .emoji{font-size:18px}
 .npc-loc{font-size:11px;color:var(--muted);margin-bottom:6px}
 .npc-act{font-size:12px;line-height:1.5}
+.npc-section{margin-top:8px;padding-top:8px;border-top:1px solid #21262d}
+.npc-section-h{font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.5px}
+.npc-thought{font-size:11px;color:#c9d1d9;font-style:italic;line-height:1.5;margin-bottom:3px;padding-left:6px;border-left:2px solid #c9a63e}
+.npc-thought .t{color:var(--muted);font-style:normal;font-size:9px;margin-left:4px}
+.npc-event{font-size:11px;color:#8b949e;line-height:1.5;margin-bottom:2px}
+.npc-event .t{color:#586069;font-size:9px;margin-left:4px}
+.chat-msg.npc-npc .meta{color:#c9a63e}
+.chat-msg.npc-npc .bubble{background:#2a2418}
+.chat-msg.auto-greet .bubble{background:#1a2a3a;border-left:2px solid var(--accent)}
 .npc-chat-btn{margin-top:8px;width:100%;padding:6px;background:var(--accent);color:#fff;
   border:none;border-radius:5px;cursor:pointer;font-size:11px}
 /* chat filter tabs */
@@ -334,6 +343,25 @@ function renderState(s){
   let html = '';
   s.npcs.forEach(n=>{
     const act = (n.action||'idle').slice(0,150);
+    const thoughts = (n.recent_thoughts||[]).slice(0,2);
+    const events = (n.recent_events||[]).slice(0,3);
+    let thoughtHTML = '';
+    if(thoughts.length){
+      thoughtHTML = '<div class="npc-section"><div class="npc-section-h">💭 最近想法</div>';
+      thoughts.forEach(t=>{
+        thoughtHTML += `<div class="npc-thought">"${t.desc}" <span class="t">${t.time}</span></div>`;
+      });
+      thoughtHTML += '</div>';
+    }
+    let eventHTML = '';
+    if(events.length){
+      eventHTML = '<div class="npc-section"><div class="npc-section-h">👁️ 最近感知</div>';
+      events.forEach(e=>{
+        const dot = e.poignancy>=7 ? '🔴' : e.poignancy>=4 ? '🟡' : '⚪';
+        eventHTML += `<div class="npc-event">${dot} ${e.desc.slice(0,40)} <span class="t">${e.time}</span></div>`;
+      });
+      eventHTML += '</div>';
+    }
     html += `<div class="npc-card ${n.name}">
       <div class="npc-head">
         <div class="av ${n.name}">${n.name[0]}</div>
@@ -342,6 +370,8 @@ function renderState(s){
       </div>
       <div class="npc-loc">📍 ${n.sector||'?'}${n.arena?' · '+n.arena:''}</div>
       <div class="npc-act">${act}</div>
+      ${thoughtHTML}
+      ${eventHTML}
       <button class="npc-chat-btn" onclick="document.getElementById('chatTo').value='${n.name}';switchRTab('chat');document.getElementById('chatMsg').focus()">
         💬 跟 TA 说话
       </button>

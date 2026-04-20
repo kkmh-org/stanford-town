@@ -13,6 +13,10 @@ services:
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
       # DB: set to Postgres URL for production
       DATABASE_URL: ${DATABASE_URL:-sqlite:////app/server/app.db}
+      # Langfuse trace (optional)
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-}
     volumes:
       # Persist persona bootstrap memory (not rebuilt by image)
       - ./environment/frontend_server/storage:/app/environment/frontend_server/storage
