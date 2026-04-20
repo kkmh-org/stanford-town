@@ -98,6 +98,11 @@ class GodCmdReq(BaseModel):
     sector: Optional[str] = None
 
 
+class WorldEventReq(BaseModel):
+    event: str
+    scope: Optional[str] = "all"  # "all" or sector name like "操场"
+
+
 class MoveReq(BaseModel):
     dx: int
     dy: int
@@ -174,6 +179,14 @@ def api_god(req: GodCmdReq, user: str = Depends(require_user)):
         engine.add_god_command({"type": "force_move", "target": req.target, "sector": req.sector})
     else:
         raise HTTPException(400, f"unknown cmd type: {req.type}")
+    return {"ok": True}
+
+
+@app.post("/api/world_event")
+def api_world_event(req: WorldEventReq, user: str = Depends(require_user)):
+    if not req.event.strip():
+        raise HTTPException(400, "event text is required")
+    get_engine().add_world_event(req.event.strip(), req.scope or "all", from_user=user)
     return {"ok": True}
 
 

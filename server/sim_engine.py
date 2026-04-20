@@ -174,8 +174,49 @@ class SimEngine:
             v.tile = next(iter(self.maze.address_tiles[addr]))
 
     def add_god_command(self, cmd: dict):
-        """E.g. {'type': 'force_move', 'target': '钟辰时', 'sector': '图书馆'}"""
-        self.god_commands.append(cmd)
+        """E.g. {'type': 'force_move', 'target': '钟辰时', 'sector': '图书馆'}.
+        Applied immediately (does NOT wait for next tick) so users get instant feedback.
+        """
+        try:
+            self._apply_god_command(cmd)
+        except Exception as e:
+            traceback.print_exc()
+            print(f"[god] immediate apply failed: {e}")
+        # Schedule a fast broadcast so frontend updates immediately
+        if self._loop is not None:
+            asyncio.run_coroutine_threadsafe(
+                self._broadcast(self.snapshot()), self._loop)
+
+    def _apply_god_command(self, cmd: dict):
+        """Synchronously apply a god command to the world state."""
+        if cmd.get("type") != "force_move":
+            print(f"[god] unknown cmd type: {cmd.get('type')}")
+            return
+        name = cmd.get("target")
+        sector = cmd.get("sector")
+        if name not in self.personas:
+            print(f"[god] FAIL: unknown persona {name!r}")
+            return
+        addr = f"南一高中:{sector}"
+        if addr not in self.maze.address_tiles:
+            print(f"[god] FAIL: address {addr!r} not found")
+            return
+        tile = next(iter(self.maze.address_tiles[addr]))
+        p = self.personas[name]
+        # Clear any old event tag at the previous tile so map doesn't show stale info
+        try:
+            if p.scratch.curr_tile:
+                self.maze.remove_subject_events_from_tile(name, p.scratch.curr_tile)
+        except Exception:
+            pass
+        p.scratch.curr_tile = tile
+        # Override planned action so execute() doesn't path-find back
+        p.scratch.act_address = f"南一高中:{sector}:被传送到此"
+        p.scratch.act_description = f"（被强制带到了{sector}）"
+        p.scratch.act_pronunciatio = "✨"
+        p.scratch.planned_path = []
+        p.scratch.act_path_set = False
+        print(f"[god] moved {name} → {sector} at tile {tile}")
 
     def add_user_message(self, from_user: str, to_npc: str, msg: str):
         pm = {
@@ -215,24 +256,133 @@ class SimEngine:
             }
             self.chat_log.append(entry_out)
             await self._broadcast({"type": "chat", "entry": entry_out})
+
+            # ✨ Plan 1: Inject the conversation as a memory event
+            # so future reflection / planning is influenced by what user said.
+            await asyncio.to_thread(
+                self._inject_memory, npc,
+                f"{pm['from_user']} 对我说：「{pm['msg']}」我回复：「{reply}」",
+                poignancy=7,  # User-initiated conversations are noteworthy
+                subject=pm['from_user'], predicate="对话", obj=npc.scratch.name,
+            )
         except Exception as e:
             traceback.print_exc()
             print(f"[user_msg] failed: {e}")
 
+    def _inject_memory(self, npc: "Persona", description: str,
+                       poignancy: int = 6,
+                       subject: str = None, predicate: str = "experiences", obj: str = None):
+        """Inject a high-importance event into NPC's associative memory."""
+        try:
+            from persona.prompt_template.gpt_structure import get_embedding
+            subj = subject or "world"
+            o = obj or "event"
+            emb_pair = (description, get_embedding(description))
+            npc.a_mem.add_event(
+                created=self.sim_time,
+                expiration=None,
+                s=subj, p=predicate, o=o,
+                description=description,
+                keywords={subj, predicate, o},
+                poignancy=poignancy,
+                embedding_pair=emb_pair,
+                filling=[],
+            )
+            # Trigger reflection countdown
+            npc.scratch.importance_trigger_curr -= poignancy
+            npc.scratch.importance_ele_n += 1
+        except Exception as e:
+            print(f"[inject_memory] {npc.scratch.name}: {e}")
+
+    # ============================================================
+    # Plan 2: World event broadcast — God-mode injection
+    # ============================================================
+
+    def add_world_event(self, event_text: str, scope: str = "all", from_user: str = "上帝"):
+        """User publishes a world event; broadcast to NPCs and let each react."""
+        if self._loop is None:
+            return
+        asyncio.run_coroutine_threadsafe(
+            self._handle_world_event(event_text, scope, from_user), self._loop)
+
+    async def _handle_world_event(self, event_text: str, scope: str, from_user: str):
+        try:
+            time_str = self.sim_time.strftime("%H:%M")
+            # 1. Show the event in chat log so users see what was published
+            event_entry = {
+                "time": time_str,
+                "from": from_user,
+                "to": "全员",
+                "msg": f"🌍 {event_text}",
+                "kind": "world_event",
+                "scope": scope,
+            }
+            self.chat_log.append(event_entry)
+            await self._broadcast({"type": "chat", "entry": event_entry})
+
+            # 2. For each NPC: inject memory + generate immediate reaction
+            affected = list(self.personas.values())
+            if scope != "all":
+                # scope is a sector name — only NPCs in that sector are affected
+                affected = [p for p in affected
+                            if self.maze.access_tile(p.scratch.curr_tile or (0, 0))
+                                       .get("sector") == scope]
+
+            for p in affected:
+                # Inject memory (poignancy 8 — world events are major)
+                await asyncio.to_thread(
+                    self._inject_memory, p,
+                    f"突发：{event_text}",
+                    poignancy=8,
+                    subject="世界", predicate="发生", obj=event_text[:30],
+                )
+                # Generate immediate reaction (parallel)
+                asyncio.create_task(self._react_to_world_event(p, event_text))
+        except Exception as e:
+            traceback.print_exc()
+            print(f"[world_event] failed: {e}")
+
+    async def _react_to_world_event(self, npc: "Persona", event_text: str):
+        """NPC's immediate spoken reaction to a world event."""
+        try:
+            reaction = await asyncio.to_thread(
+                self._gen_world_event_reaction, npc, event_text)
+            entry = {
+                "time": self.sim_time.strftime("%H:%M"),
+                "from": npc.scratch.name,
+                "to": "周围",
+                "msg": reaction,
+                "kind": "npc_reaction",
+            }
+            self.chat_log.append(entry)
+            await self._broadcast({"type": "chat", "entry": entry})
+        except Exception as e:
+            print(f"[react] {npc.scratch.name}: {e}")
+
+    def _gen_world_event_reaction(self, npc, event_text: str) -> str:
+        """LLM: NPC's in-character reaction to a sudden world event."""
+        from persona.prompt_template.gpt_structure import ChatGPT_single_request
+        sector = self.maze.access_tile(npc.scratch.curr_tile or (0, 0)).get("sector", "未知")
+        prompt = (
+            f"你是高中生 {npc.scratch.name}。\n"
+            f"性格：{npc.scratch.innate}\n"
+            f"此刻你正在「{sector}」，正在做：{npc.scratch.act_description or '无'}\n\n"
+            f"突发情况：{event_text}\n\n"
+            f"用一句符合你性格的话脱口而出（不超过 25 字，可以包含动作描述比如「（皱眉）」）。"
+            f"不要加引号。"
+        )
+        try:
+            return ChatGPT_single_request(prompt).strip().strip('"').strip('「').strip('」')[:80]
+        except Exception:
+            return "（一愣）"
+
     def _process_god_commands(self):
-        """Apply pending god commands before tick."""
+        """Apply any leftover god commands before tick (most are applied immediately
+        in add_god_command; this only catches any that weren't applied)."""
         while self.god_commands:
             cmd = self.god_commands.pop(0)
             try:
-                if cmd["type"] == "force_move":
-                    name = cmd["target"]
-                    sector = cmd["sector"]
-                    if name in self.personas:
-                        addr = f"南一高中:{sector}"
-                        if addr in self.maze.address_tiles:
-                            tile = next(iter(self.maze.address_tiles[addr]))
-                            self.personas[name].scratch.curr_tile = tile
-                            print(f"[god] moved {name} → {sector}")
+                self._apply_god_command(cmd)
             except Exception as e:
                 print(f"[god] cmd failed: {e}")
 

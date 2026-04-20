@@ -62,6 +62,10 @@ body{font-family:"PingFang SC",sans-serif;background:var(--bg);color:var(--text)
 .chat-msg.npc-npc .meta{color:#c9a63e}
 .chat-msg.npc-npc .bubble{background:#2a2418}
 .chat-msg.auto-greet .bubble{background:#1a2a3a;border-left:2px solid var(--accent)}
+.chat-msg.world-event .meta{color:#e85aa0}
+.chat-msg.world-event .bubble{background:linear-gradient(135deg,#3a1a2a,#1a1a3a);border:1px solid #e85aa0;font-weight:600;color:#fff}
+.chat-msg.npc-reaction .meta{color:#7ec3a3}
+.chat-msg.npc-reaction .bubble{background:#1a2a22;border-left:2px solid #7ec3a3;font-style:italic}
 .npc-chat-btn{margin-top:8px;width:100%;padding:6px;background:var(--accent);color:#fff;
   border:none;border-radius:5px;cursor:pointer;font-size:11px}
 /* chat filter tabs */
@@ -196,7 +200,40 @@ body{font-family:"PingFang SC",sans-serif;background:var(--bg);color:var(--text)
 
     <div class="right-content hidden" id="rc-god" style="display:none">
       <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
-        上帝视角：直接操控 NPC 的位置和行为
+        上帝视角：你是这个世界的导演
+      </div>
+
+      <!-- ✨ 世界事件广播 -->
+      <div style="background:#1a1f2a;padding:12px;border-radius:8px;border-left:3px solid #c9a63e;margin-bottom:16px">
+        <div style="font-size:12px;color:#c9a63e;margin-bottom:8px;font-weight:600">
+          🌍 发布世界事件
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.5">
+          输入一个突发情况，所有 NPC 会感知到并按性格做出反应。
+        </div>
+        <div class="god-row">
+          <input id="worldEvent" placeholder="例：操场广播篮球赛取消 / 突然下大雨"
+                 onkeydown="if(event.key==='Enter')sendWorldEvent()">
+        </div>
+        <div class="god-row" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <select id="eventScope" style="font-size:11px">
+            <option value="all">全校</option>
+            <option value="教学楼">仅教学楼</option>
+            <option value="食堂">仅食堂</option>
+            <option value="操场">仅操场</option>
+            <option value="咖啡厅">仅咖啡厅</option>
+            <option value="图书馆">仅图书馆</option>
+          </select>
+          <button onclick="sendWorldEvent()" style="background:#c9a63e">📢 发布</button>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px">
+          💡 试试：「下大雨了」「操场广播：体育课取消」「电力故障，全校停电」
+        </div>
+      </div>
+
+      <!-- 强制移动 NPC -->
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">
+        🎯 强制移动 NPC
       </div>
       <div class="god-row">
         <label>目标角色</label>
@@ -207,7 +244,7 @@ body{font-family:"PingFang SC",sans-serif;background:var(--bg);color:var(--text)
         </select>
       </div>
       <div class="god-row">
-        <label>强制移动到</label>
+        <label>移动到</label>
         <select id="godSector">
           <option value="教学楼">教学楼</option>
           <option value="图书馆">图书馆</option>
@@ -247,9 +284,14 @@ function switchTab(name){
 }
 function switchRTab(name){
   document.querySelectorAll('.rtab').forEach(t=>t.classList.toggle('active',t.dataset.rtab===name));
-  document.getElementById('rc-state').style.display = name==='state' ? '' : 'none';
+  // Remove the .hidden class which has display:none — then set inline display
+  ['rc-state','rc-chat','rc-god'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('hidden');
+  });
+  document.getElementById('rc-state').style.display = name==='state' ? 'block' : 'none';
   document.getElementById('rc-chat').style.display = name==='chat' ? 'flex' : 'none';
-  document.getElementById('rc-god').style.display = name==='god' ? '' : 'none';
+  document.getElementById('rc-god').style.display = name==='god' ? 'block' : 'none';
 }
 
 // ---------- login ----------
@@ -331,6 +373,18 @@ async function sendGodCmd(){
   const sector = document.getElementById('godSector').value;
   await fetch('/api/god',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({type:'force_move',target,sector})});
+}
+
+async function sendWorldEvent(){
+  const event = document.getElementById('worldEvent').value.trim();
+  if(!event)return;
+  const scope = document.getElementById('eventScope').value;
+  const r = await fetch('/api/world_event',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({event,scope})});
+  if(r.ok){
+    document.getElementById('worldEvent').value='';
+    switchRTab('chat');  // jump to chat to see reactions
+  }
 }
 
 // ---------- render ----------
@@ -423,6 +477,8 @@ function appendChatDom(entry){
   let cls = 'npc-npc';
   if(kind==='user_to_npc')cls='user';
   else if(kind==='npc_to_user')cls='npc';
+  else if(kind==='world_event')cls='world-event';
+  else if(kind==='npc_reaction')cls='npc-reaction';
   const div = document.createElement('div');
   div.className = `chat-msg ${cls}`;
   div.innerHTML = `<div class="meta">${entry.time||''} ${entry.from||''} → ${entry.to||''}</div>
