@@ -33,13 +33,12 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 # ---------------------------------------------------------------------------
 _langfuse_handler = None
 try:
+  os.environ.setdefault("LANGFUSE_SECRET_KEY", LANGFUSE_SECRET_KEY)
+  os.environ.setdefault("LANGFUSE_PUBLIC_KEY", LANGFUSE_PUBLIC_KEY)
+  os.environ.setdefault("LANGFUSE_HOST", LANGFUSE_HOST)
   from langfuse.langchain import CallbackHandler
-  _langfuse_handler = CallbackHandler(
-      secret_key=LANGFUSE_SECRET_KEY,
-      public_key=LANGFUSE_PUBLIC_KEY,
-      host=LANGFUSE_HOST,
-  )
-except ImportError:
+  _langfuse_handler = CallbackHandler()
+except (ImportError, Exception):
   pass
 
 # ---------------------------------------------------------------------------
