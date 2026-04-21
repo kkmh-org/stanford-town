@@ -16,6 +16,11 @@ BACKEND = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
                        "reverie", "backend_server")
 sys.path.insert(0, BACKEND)
 
+# IMPORTANT: prompt template loaders use relative paths like
+# "persona/prompt_template/v2/...", which only work when cwd == BACKEND.
+# Without this chdir, NPC.move() crashes silently and personas stay frozen.
+os.chdir(BACKEND)
+
 from lbs_maze import LBSMaze
 from persona.persona import Persona
 
@@ -32,7 +37,16 @@ PERSONA_ROOT = os.path.join(ROOT, "environment", "frontend_server",
                             "storage", "base_nan_yi_high", "personas")
 NPC_NAMES = ["钟辰时", "周往", "陈昔"]
 TICK_MINUTES = 10
-START_DATETIME = datetime.datetime(2026, 4, 14, 7, 0)
+START_DATETIME = datetime.datetime(2026, 4, 14, 7, 30)
+
+# School hours: students arrive 07:30, leave 21:30
+SCHOOL_OPEN = datetime.time(7, 30)
+SCHOOL_CLOSE = datetime.time(21, 30)
+
+
+def _is_school_hours(t: datetime.datetime) -> bool:
+    tt = t.time()
+    return SCHOOL_OPEN <= tt < SCHOOL_CLOSE
 
 
 class Visitor:
@@ -77,8 +91,9 @@ class SimEngine:
         """Current world state for broadcasting to clients."""
         npcs = []
         for name, p in self.personas.items():
+            at_home = p.scratch.curr_tile is None
             tile = p.scratch.curr_tile or (0, 0)
-            td = self.maze.access_tile(tile)
+            td = {} if at_home else self.maze.access_tile(tile)
             # Latest thought (reflection) — seq_thought[0] is newest
             recent_thoughts = []
             try:
@@ -102,9 +117,10 @@ class SimEngine:
                 pass
             npcs.append({
                 "name": name,
+                "at_home": at_home,
                 "tile": list(tile),
-                "sector": td.get("sector", ""),
-                "arena": td.get("arena", ""),
+                "sector": "🏠 在家" if at_home else td.get("sector", ""),
+                "arena": "" if at_home else td.get("arena", ""),
                 "address": p.scratch.act_address or "",
                 "action": (p.scratch.act_description or "").replace("\n", " ")[:500],
                 "emoji": p.scratch.act_pronunciatio or "🙂",
@@ -128,6 +144,7 @@ class SimEngine:
             "type": "state",
             "sim_time": self.sim_time.strftime("%Y-%m-%d %H:%M"),
             "tick": self.tick_count,
+            "in_school_hours": _is_school_hours(self.sim_time),
             "npcs": npcs,
             "visitors": vs,
             "recent_chats": self.chat_log[-20:],
@@ -586,34 +603,86 @@ class SimEngine:
             try:
                 self._process_god_commands()
 
-                # Advance NPCs (blocking LLM calls run in thread pool)
-                def advance():
-                    for name, p in self.personas.items():
-                        try:
-                            curr_tile = p.scratch.curr_tile
-                            execution = p.move(self.maze, self.personas, curr_tile, self.sim_time)
-                            next_tile, _, _ = execution
-                            self.maze.remove_subject_events_from_tile(name, curr_tile)
-                            if p.scratch.act_event:
-                                new_event = (*p.scratch.act_event, p.scratch.act_description)
-                                self.maze.add_event_from_tile(new_event, next_tile)
-                            p.scratch.curr_tile = next_tile
-                        except Exception as e:
-                            print(f"[tick] {name} failed: {e}")
+                in_school = _is_school_hours(self.sim_time)
 
-                await asyncio.to_thread(advance)
-
+                # ✨ Time advances IMMEDIATELY each tick — NPC behavior runs async
+                # in background. Otherwise slow LLM calls (90s+ for first day plan)
+                # would freeze the clock and look like the sim is broken.
                 self.tick_count += 1
                 self.sim_time += datetime.timedelta(minutes=TICK_MINUTES)
 
-                # Check for emergent interactions (NPC-NPC chats + visitor greetings)
-                await self._check_emergent_interactions()
+                # Off-school: instant state update, no LLM
+                if not in_school:
+                    for name, p in self.personas.items():
+                        if p.scratch.curr_tile:
+                            try:
+                                self.maze.remove_subject_events_from_tile(name, p.scratch.curr_tile)
+                            except Exception:
+                                pass
+                            p.scratch.curr_tile = None
+                            p.scratch.act_description = "在家休息"
+                            p.scratch.act_pronunciatio = "🏠"
+                            p.scratch.act_address = "家:卧室:床"
+                else:
+                    # Just-arrived: instant spawn at gate
+                    for name, p in self.personas.items():
+                        if p.scratch.curr_tile is None:
+                            try:
+                                spawn = self.maze.get_spawning_tile(
+                                    p.scratch.living_area or "南一高中:校门口")
+                                p.scratch.curr_tile = spawn
+                                p.scratch.act_description = "刚到校门口"
+                                p.scratch.act_pronunciatio = "🎒"
+                            except Exception:
+                                pass
+                    # Trigger NPC.move() in parallel background tasks (don't await)
+                    self._launch_npc_advances(self.sim_time)
 
-                # Broadcast new state
+                await self._check_emergent_interactions()
                 await self._broadcast(self.snapshot())
             except Exception as e:
                 traceback.print_exc()
                 print(f"[tick] failed: {e}")
+
+    def _launch_npc_advances(self, snapshot_time):
+        """Run each NPC's move() in its own background thread; don't block tick.
+
+        If an NPC is still 'thinking' from a previous tick, we skip this round
+        for them — better to drop a tick than to spawn unbounded threads.
+        """
+        if not hasattr(self, '_npc_busy'):
+            self._npc_busy = {}
+        for name, p in self.personas.items():
+            if self._npc_busy.get(name):
+                continue  # still busy from previous tick
+            self._npc_busy[name] = True
+            asyncio.create_task(self._advance_one_npc(name, p, snapshot_time))
+
+    async def _advance_one_npc(self, name: str, p: "Persona", t):
+        """Run a single NPC's move() in the thread pool, then broadcast."""
+        try:
+            def _do_move():
+                curr_tile = p.scratch.curr_tile
+                if curr_tile is None:
+                    return
+                execution = p.move(self.maze, self.personas, curr_tile, t)
+                next_tile, _, _ = execution
+                try:
+                    self.maze.remove_subject_events_from_tile(name, curr_tile)
+                    if p.scratch.act_event:
+                        new_event = (*p.scratch.act_event, p.scratch.act_description)
+                        self.maze.add_event_from_tile(new_event, next_tile)
+                except Exception:
+                    pass
+                p.scratch.curr_tile = next_tile
+
+            await asyncio.to_thread(_do_move)
+            # Push a fresh snapshot so user sees this NPC's update immediately
+            await self._broadcast(self.snapshot())
+        except Exception as e:
+            print(f"[advance] {name} failed: {e}")
+        finally:
+            self._npc_busy[name] = False
 
     async def run_forever(self):
         self._running = True

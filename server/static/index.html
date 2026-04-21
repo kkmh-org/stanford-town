@@ -14,8 +14,17 @@ body{font-family:"PingFang SC",sans-serif;background:var(--bg);color:var(--text)
   display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
 .topbar h1{font-size:15px;font-weight:600}
 .topbar .badge{font-size:11px;background:var(--accent);color:#fff;padding:2px 7px;border-radius:4px}
-.sim-time{font-size:24px;font-weight:700;color:var(--accent);margin-left:12px;
-  font-variant-numeric:tabular-nums}
+.sim-time{font-size:28px;font-weight:700;color:var(--accent);margin-left:14px;
+  font-variant-numeric:tabular-nums;letter-spacing:1px;
+  text-shadow:0 0 12px rgba(88,166,255,.45);
+  display:inline-flex;align-items:baseline;gap:6px}
+.sim-time .day{font-size:11px;color:var(--muted);font-weight:500;text-shadow:none;letter-spacing:0}
+.sim-time .colon{animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+.sim-time.advancing{animation:pulse 0.4s ease}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.06);color:#7ec3a3}100%{transform:scale(1)}}
+.tick-progress{width:60px;height:3px;background:#21262d;border-radius:2px;margin-left:10px;overflow:hidden;display:inline-block;vertical-align:middle}
+.tick-progress div{height:100%;background:linear-gradient(90deg,var(--accent),#7ec3a3);width:0%;transition:width .1s linear}
 .topbar .sep{flex:1}
 .topbar .user-info{font-size:12px;color:var(--muted)}
 .topbar button{background:#21262d;color:var(--text);border:1px solid var(--border);
@@ -115,7 +124,12 @@ body{font-family:"PingFang SC",sans-serif;background:var(--bg);color:var(--text)
 <div class="topbar">
   <h1>角色世界模拟器</h1>
   <span class="badge">南一高中</span>
-  <div class="sim-time" id="simTime">--:--</div>
+  <div class="sim-time" id="simTime">
+    <span id="simHM">--<span class="colon">:</span>--</span>
+    <span class="day" id="simDay"></span>
+  </div>
+  <div class="tick-progress" title="距下次推进"><div id="tickBar"></div></div>
+  <span id="schoolBadge" style="margin-left:12px;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;background:#21262d;color:var(--muted)">⏳ 加载中</span>
   <div class="sep"></div>
   <div class="user-info">👤 <span id="username">-</span></div>
   <button onclick="toggleVisitor()" id="visitorBtn">🚪 进入世界</button>
@@ -123,13 +137,13 @@ body{font-family:"PingFang SC",sans-serif;background:var(--bg);color:var(--text)
 </div>
 
 <div class="tabs">
-  <div class="tab active" data-tab="lbs" onclick="switchTab('lbs')">🗺️ 校园地图</div>
-  <div class="tab" data-tab="phaser" onclick="switchTab('phaser')">🎮 像素地图</div>
+  <div class="tab active" data-tab="phaser" onclick="switchTab('phaser')">🎮 像素地图</div>
+  <div class="tab" data-tab="lbs" onclick="switchTab('lbs')">🗺️ 校园地图</div>
 </div>
 
 <div class="main">
   <div class="viewport">
-    <iframe id="viewFrame" src="/static/map_lbs.html"></iframe>
+    <iframe id="viewFrame" src="/static/map_phaser.html"></iframe>
   </div>
 
   <div class="right">
@@ -276,6 +290,39 @@ let currentUser = '';
 let chatFilter = 'all';       // 'all' | '钟辰时' | '周往' | '陈昔'
 let allChats = [];            // accumulated messages for filtering
 
+// ---------- sim clock (truthful — follows real backend ticks) ----------
+let _lastTickTs = Date.now();
+
+function updateSimClock(simTime, tickCount){
+  // simTime: "2026-04-14 08:50"
+  const parts = simTime.split(' ');
+  const dateStr = parts[0] || '';
+  const hm = parts[1] || '00:00';
+  document.getElementById('simHM').innerHTML =
+    hm.replace(':', '<span class="colon">:</span>');
+  document.getElementById('simDay').textContent = dateStr.slice(5);
+  _lastTickTs = Date.now();
+  // Visual pulse on real tick
+  const el = document.getElementById('simTime');
+  el.classList.remove('advancing');
+  void el.offsetWidth;
+  el.classList.add('advancing');
+}
+
+// "Thinking..." indicator: bar fills up as wait time grows, signals backend is busy
+setInterval(()=>{
+  const elapsedSec = (Date.now() - _lastTickTs)/1000;
+  const bar = document.getElementById('tickBar');
+  if(bar){
+    // Bar fills proportionally — 60s wait = 100% (means backend is slow)
+    const pct = Math.min(100, elapsedSec/60*100);
+    bar.style.width = pct+'%';
+    // Color shifts to orange/red as wait grows
+    if(elapsedSec > 30) bar.style.background = 'linear-gradient(90deg,#c9a63e,#e85a3a)';
+    else bar.style.background = 'linear-gradient(90deg,var(--accent),#7ec3a3)';
+  }
+}, 200);
+
 // ---------- tabs ----------
 function switchTab(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
@@ -390,8 +437,22 @@ async function sendWorldEvent(){
 // ---------- render ----------
 function renderState(s){
   state = s;
-  document.getElementById('simTime').textContent = s.sim_time.split(' ')[1] || s.sim_time;
+  // sim_time is "YYYY-MM-DD HH:MM"
+  updateSimClock(s.sim_time, s.tick);
   document.getElementById('tickInfo').textContent = `Tick ${s.tick}`;
+  // School-hours badge
+  const badge = document.getElementById('schoolBadge');
+  if(badge){
+    if(s.in_school_hours){
+      badge.textContent = '🏫 上学时间';
+      badge.style.background = '#1a3a2a';
+      badge.style.color = '#7ec3a3';
+    }else{
+      badge.textContent = '🏠 放学了';
+      badge.style.background = '#3a2a1a';
+      badge.style.color = '#c9a63e';
+    }
+  }
 
   const list = document.getElementById('npcList');
   let html = '';
@@ -399,6 +460,7 @@ function renderState(s){
     const act = (n.action||'idle').slice(0,150);
     const thoughts = (n.recent_thoughts||[]).slice(0,2);
     const events = (n.recent_events||[]).slice(0,3);
+    const homeStyle = n.at_home ? 'opacity:.45;filter:grayscale(.3)' : '';
     let thoughtHTML = '';
     if(thoughts.length){
       thoughtHTML = '<div class="npc-section"><div class="npc-section-h">💭 最近想法</div>';
@@ -416,7 +478,7 @@ function renderState(s){
       });
       eventHTML += '</div>';
     }
-    html += `<div class="npc-card ${n.name}">
+    html += `<div class="npc-card ${n.name}" style="${homeStyle}">
       <div class="npc-head">
         <div class="av ${n.name}">${n.name[0]}</div>
         <div class="name">${n.name}</div>

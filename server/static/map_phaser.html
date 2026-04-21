@@ -357,7 +357,10 @@ class MainScene extends Phaser.Scene {
       seen.add(name);
     };
 
-    (s.npcs||[]).forEach(n=>place(n.name, n.sector||'校门口', 'npc', n.action));
+    (s.npcs||[]).forEach(n=>{
+      if(n.at_home) return;  // off-school: don't render on map
+      place(n.name, n.sector||'校门口', 'npc', n.action);
+    });
     (s.visitors||[]).forEach(v=>place(v.name, v.sector||'校门口', 'visitor', '(访客)'));
 
     Object.keys(this.avatars).forEach(name=>{

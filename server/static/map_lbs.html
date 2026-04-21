@@ -129,7 +129,7 @@ function updateState(s){
     const el = document.getElementById('bld-'+sector);
     if(el) el.classList.add('active');
   };
-  (s.npcs||[]).forEach(n=>placeAvatar(n.name, n.sector||'校门口', 'npc'));
+  (s.npcs||[]).forEach(n=>{ if(!n.at_home) placeAvatar(n.name, n.sector||'校门口', 'npc'); });
   (s.visitors||[]).forEach(v=>placeAvatar(v.name, v.sector||'校门口', 'visitor'));
   // Remove avatars no longer present
   Object.keys(avatars).forEach(name=>{
